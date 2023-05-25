@@ -31,9 +31,8 @@ func main() {
 		// - AZURE_SUBSCRIPTION_ID
 		// - AZURE_CLIENT_ID
 		// - AZURE_CLIENT_SECRET
-		// - AZURE_TENANT_ID
 
-		cluster, err := azure.GetCluster(context.Background(), "plural", "eastus")
+		cluster, err := azure.GetCluster(context.Background(), "plrltest2", "plural")
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -19,7 +19,6 @@ type Provider struct {
 	managedClustersClient *armcontainerservice.ManagedClustersClient
 }
 
-
 func GetProvider(ctx context.Context, clusterName, resourceGroupName string) (*Provider, error) {
 	subscriptionId := os.Getenv("AZURE_SUBSCRIPTION_ID")
 	if len(subscriptionId) == 0 {
@@ -71,6 +70,13 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*st
 	}
 
 	fmt.Println(provider)
+
+	cluster, err := provider.managedClustersClient.Get(ctx, resourceGroupName, clusterName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(cluster.Name)
 
 	return nil, nil
 }
