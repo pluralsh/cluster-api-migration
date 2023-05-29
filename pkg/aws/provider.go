@@ -17,6 +17,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
+	clusterapi "github.com/pluralsh/cluster-api-migration/pkg/api"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/eks"
@@ -267,4 +268,16 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 	}
 
 	return newCluster, nil
+}
+
+func GenerateModel(ctx context.Context, clusterName, region string) (string, error) {
+	cluster := clusterapi.Cluster{
+		Name:              clusterName,
+		CIDRBlocks:        nil,
+		KubernetesVersion: "",
+		CloudSpec: clusterapi.CloudSpec{
+			AWSCloudSpec: &clusterapi.AWSCloudSpec{},
+		},
+	}
+	return "", nil
 }

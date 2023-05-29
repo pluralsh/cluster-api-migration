@@ -12,7 +12,7 @@ type CloudSpec struct {
 }
 
 type Workers struct {
-	Defaults    DefaultsWorkers `json:"defaults"`
+	Defaults    DefaultsWorker `json:"defaults"`
 	WorkersSpec `json:",inline"`
 }
 
@@ -20,6 +20,6 @@ type WorkersSpec struct {
 	AWSWorkers *AWSWorkers `json:"aws,omitempty"`
 }
 
-type DefaultsWorkers struct {
-	AWSDefaultWorkers *AWSDefaultWorkers `json:"aws,omitempty"`
+type DefaultsWorker struct {
+	AWSDefaultWorker *AWSDefaultWorker `json:"aws,omitempty"`
 }
