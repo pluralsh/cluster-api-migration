@@ -1,9 +1,5 @@
 package api
 
-import (
-	corev1 "k8s.io/api/core/v1"
-)
-
 // Following specs should match ones from plural-artifacts repository.
 
 type Tags map[string]string
@@ -22,7 +18,7 @@ type AzureCloudSpec struct {
 	ClientID string `json:"clientID"`
 
 	// Service Principal password.
-	ClientSecret corev1.SecretReference `json:"clientSecret,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty"`
 
 	// Name of Secret containing clientSecret.
 	ClientSecretName string `json:"clientSecretName,omitempty"`

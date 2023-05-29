@@ -2,13 +2,13 @@ package azure
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
 type Provider struct {
@@ -63,7 +63,7 @@ func GetProvider(ctx context.Context, clusterName, resourceGroupName string) (*P
 	}, nil
 }
 
-func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*struct{}, error) {
+func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*api.Cluster, error) {
 	provider, err := GetProvider(ctx, clusterName, resourceGroupName)
 	if err != nil {
 		return nil, err
@@ -74,8 +74,30 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*st
 		return nil, err
 	}
 
-	fmt.Println(*cluster.Name)
-	fmt.Println(*cluster.SKU.Name)
+	output := &api.Cluster{
+		Name:              *cluster.Name,
+		CIDRBlocks:        nil,
+		KubernetesVersion: "",
+		CloudSpec: api.CloudSpec{
+			AzureCloudSpec: &api.AzureCloudSpec{
+				ClusterIdentityName: "",
+				ClusterIdentityType: "",
+				ClientID:            "",
+				ClientSecret:        "",
+				ClientSecretName:    "",
+				ResourceID:          "",
+				TenantID:            "",
+				SubscriptionID:      "",
+				Location:            "",
+				ResourceGroupName:   "",
+				SSHPublicKey:        "",
+			},
+		},
+	}
 
-	return nil, nil
+	// TODO: Fill.
+	// TODO: Add workers.
+	// TODO: Add more props here and to plural-artifacts.
+
+	return output, nil
 }
