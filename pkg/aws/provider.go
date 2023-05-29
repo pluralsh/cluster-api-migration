@@ -18,6 +18,7 @@ import (
 
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
 	clusterapi "github.com/pluralsh/cluster-api-migration/pkg/api"
+	migrationapi "github.com/pluralsh/cluster-api-migration/pkg/api"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/eks"
@@ -64,7 +65,7 @@ func GetProvider(ctx context.Context, clusterName, region string) (*Provider, er
 	}, nil
 }
 
-func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, error) {
+func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.Cluster, error) {
 	provider, err := GetProvider(ctx, clusterName, region)
 	if err != nil {
 		return nil, err
@@ -127,8 +128,7 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 	}
 	vpc := vpcs.Vpcs[0]
 
-	newCluster := &Cluster{
-		MachinePools: []MachinePool{},
+	newCluster := &migrationapi.Cluster{
 		ControlPlane: ControlPlane{
 			Region:     region,
 			SSHKeyName: "default",

@@ -210,10 +210,10 @@ type ManagedMachinePoolScaling struct {
 }
 
 type AWSDefaultWorker struct {
+	AWSWorker `json:",inline"`
 }
 
-type AWSWorkers struct {
-}
+type AWSWorkers map[string]AWSWorker
 
 type AWSWorker struct {
 	Replicas int `json:"replicas"`

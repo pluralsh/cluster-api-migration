@@ -1,5 +1,12 @@
 package api
 
+type ClusterAPI struct {
+	Provider string  `json:"provider"`
+	Type     string  `json:"type"`
+	Cluster  Cluster `json:"cluster"`
+	Workers  Workers `json:"workers"`
+}
+
 type Cluster struct {
 	Name              string   `json:"name"`
 	CIDRBlocks        []string `json:"cidrBlocks"`
