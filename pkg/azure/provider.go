@@ -77,20 +77,22 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*ap
 	output := &api.Cluster{
 		Name:              *cluster.Name,
 		CIDRBlocks:        nil,
-		KubernetesVersion: "",
+		KubernetesVersion: *cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
-				ClusterIdentityName: "",
-				ClusterIdentityType: "",
-				ClientID:            "",
-				ClientSecret:        "",
-				ClientSecretName:    "",
-				ResourceID:          "",
-				TenantID:            "",
-				SubscriptionID:      "",
-				Location:            "",
-				ResourceGroupName:   "",
-				SSHPublicKey:        "",
+				// Exported clusters will use service principal auth method,
+				// not the one they were using before.
+				ClusterIdentityType: "ServicePrincipal",
+				ClusterIdentityName: "cluster-identity",
+				ClientID:            provider.clientId,
+				ClientSecret:        provider.clientSecret,
+				ClientSecretName:    "cluster-identity-secret",
+				TenantID:            *cluster.Identity.TenantID,
+				SubscriptionID:      provider.subsctiptionId,
+
+				Location:          *cluster.Location,
+				ResourceGroupName: resourceGroupName,
+				SSHPublicKey:      "",
 			},
 		},
 	}

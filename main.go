@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	provider = "aws"
+	provider = "azure"
 )
 
 func main() {
@@ -19,12 +19,12 @@ func main() {
 		os.Setenv("AWS_SECRET_ACCESS_KEY", "")
 		os.Setenv("AWS_SESSION_TOKEN", "")
 		os.Setenv("AWS_REGION", "eu-central-1")
-	
+
 		cluster, err := aws.GetCluster(context.Background(), "test-aws", "eu-central-1")
 		if err != nil {
 			fmt.Println(err)
 		}
-	
+
 		fmt.Printf("cluster %v", cluster)
 	} else if provider == "azure" {
 		// Azure client requires below variables being set:
@@ -36,7 +36,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-	
+
 		fmt.Printf("cluster %v", cluster)
 	}
 }
