@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"strings"
 	"time"
 
@@ -11,12 +10,14 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/weaveworks/eksctl/pkg/actions/addon"
 	"github.com/weaveworks/eksctl/pkg/actions/nodegroup"
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
+	clusterapi "github.com/pluralsh/cluster-api-migration/pkg/api"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/eks"
@@ -93,17 +94,6 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 		return nil, err
 	}
 
-	for _, ng := range ngList.Nodegroups {
-		nodeGroup, err := eksSvc.DescribeNodegroup(&ekssdk.DescribeNodegroupInput{
-			ClusterName:   &clusterName,
-			NodegroupName: ng,
-		})
-		if err != nil {
-			return nil, err
-		}
-		fmt.Println(nodeGroup)
-	}
-
 	name := "vpc-id"
 	subnets, err := svc.DescribeSubnets(ctx, &ec2.DescribeSubnetsInput{
 		Filters: []ec2Types.Filter{
@@ -138,6 +128,7 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 	vpc := vpcs.Vpcs[0]
 
 	newCluster := &Cluster{
+		MachinePools: []MachinePool{},
 		ControlPlane: ControlPlane{
 			Region:     region,
 			SSHKeyName: "default",
@@ -174,6 +165,48 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 			TokenMethod: EKSTokenMethodIAMAuthenticator,
 		},
 	}
+
+	for _, ng := range ngList.Nodegroups {
+		nodeGroup, err := eksSvc.DescribeNodegroup(&ekssdk.DescribeNodegroupInput{
+			ClusterName:   &clusterName,
+			NodegroupName: ng,
+		})
+		if err != nil {
+			return nil, err
+		}
+		availabilityZones := []string{}
+		subnetID := "subnet-id"
+		for _, subnet := range nodeGroup.Nodegroup.Subnets {
+			subnets, err := svc.DescribeSubnets(ctx, &ec2.DescribeSubnetsInput{
+				Filters: []ec2Types.Filter{
+					{Name: &subnetID, Values: []string{*subnet}},
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+			availabilityZones = append(availabilityZones, *subnets.Subnets[0].AvailabilityZone)
+		}
+
+		newCluster.MachinePools = append(newCluster.MachinePools, MachinePool{
+			AvailabilityZones: availabilityZones,
+			EKSNodegroupName:  *nodeGroup.Nodegroup.NodegroupName,
+			SubnetIDs:         nodeGroup.Nodegroup.Subnets,
+			AdditionalTags:    nodeGroup.Nodegroup.Tags,
+			AMIVersion:        *nodeGroup.Nodegroup.Version,
+			AMIType:           ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
+			Labels:            nodeGroup.Nodegroup.Labels,
+			DiskSize:          int32(*nodeGroup.Nodegroup.DiskSize),
+			InstanceType:      nodeGroup.Nodegroup.InstanceTypes[0],
+			Scaling: &ManagedMachinePoolScaling{
+				MinSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MinSize),
+				MaxSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MaxSize),
+			},
+			MaxUnavailable: int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
+		})
+
+	}
+
 	for _, vpcTag := range vpc.Tags {
 		newCluster.ControlPlane.NetworkSpec.VPC.Tags[*vpcTag.Key] = *vpcTag.Value
 	}
@@ -206,12 +239,25 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 		if len(rt.RouteTables) > 0 {
 			rtID = rt.RouteTables[0].RouteTableId
 		}
-
+		subnetID = "subnet-id"
+		gtw, err := svc.DescribeNatGateways(ctx, &ec2.DescribeNatGatewaysInput{
+			Filter: []ec2Types.Filter{
+				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		var gtID *string
+		if len(gtw.NatGateways) > 0 {
+			gtID = gtw.NatGateways[0].NatGatewayId
+		}
 		sub := infrav1.SubnetSpec{
 			ID:               *subnet.SubnetId,
 			CidrBlock:        *subnet.CidrBlock,
 			AvailabilityZone: *subnet.AvailabilityZone,
 			RouteTableID:     rtID,
+			NatGatewayID:     gtID,
 			Tags:             map[string]string{},
 		}
 		for _, tag := range subnet.Tags {
@@ -222,4 +268,16 @@ func GetCluster(ctx context.Context, clusterName, region string) (*Cluster, erro
 	}
 
 	return newCluster, nil
+}
+
+func GenerateModel(ctx context.Context, clusterName, region string) (string, error) {
+	cluster := clusterapi.Cluster{
+		Name:              clusterName,
+		CIDRBlocks:        nil,
+		KubernetesVersion: "",
+		CloudSpec: clusterapi.CloudSpec{
+			AWSCloudSpec: &clusterapi.AWSCloudSpec{},
+		},
+	}
+	return "", nil
 }

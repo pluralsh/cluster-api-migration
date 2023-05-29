@@ -3,7 +3,13 @@ module github.com/pluralsh/cluster-api-migration
 go 1.19
 
 require (
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2 v2.4.0
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.1.1
 	github.com/aws/amazon-ec2-instance-selector/v2 v2.4.1
+	github.com/aws/aws-sdk-go v1.44.225
+	github.com/aws/aws-sdk-go-v2/config v1.18.18
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.90.0
 	github.com/weaveworks/eksctl v0.136.0
 	k8s.io/api v0.26.0
 	sigs.k8s.io/cluster-api v1.3.5
@@ -15,15 +21,10 @@ require (
 	cloud.google.com/go/compute v1.13.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2 v2.4.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.1.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/aws/aws-sdk-go v1.44.225 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.17.6 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.18.18 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.30 // indirect
@@ -33,7 +34,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.26.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.24.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.20.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.90.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/eks v1.27.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.15.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.19.6 // indirect
