@@ -20,7 +20,75 @@ var (
 )
 
 type Cluster struct {
-	ControlPlane ControlPlane `json:"controlPlane"`
+	ControlPlane ControlPlane  `json:"controlPlane"`
+	MachinePools []MachinePool `json:"machinePools"`
+}
+
+// ManagedMachineAMIType specifies which AWS AMI to use for a managed MachinePool.
+type ManagedMachineAMIType string
+
+const (
+	// Al2x86_64 is the default AMI type.
+	Al2x86_64 ManagedMachineAMIType = "AL2_x86_64"
+	// Al2x86_64GPU is the x86-64 GPU AMI type.
+	Al2x86_64GPU ManagedMachineAMIType = "AL2_x86_64_GPU"
+	// Al2Arm64 is the Arm AMI type.
+	Al2Arm64 ManagedMachineAMIType = "AL2_ARM_64"
+)
+
+// ManagedMachinePoolScaling specifies scaling options.
+type ManagedMachinePoolScaling struct {
+	MinSize int32 `json:"minSize,omitempty"`
+	MaxSize int32 `json:"maxSize,omitempty"`
+}
+
+// ManagedMachinePoolCapacityType specifies the capacity type to be used for the managed MachinePool.
+type ManagedMachinePoolCapacityType string
+
+type MachinePool struct {
+	// EKSNodegroupName specifies the name of the nodegroup in AWS
+	// corresponding to this MachinePool. If you don't specify a name
+	// then a default name will be created based on the namespace and
+	// name of the managed machine pool.
+	// +optional
+	EKSNodegroupName string `json:"eksNodegroupName,omitempty"`
+	// AvailabilityZones is an array of availability zones instances can run in
+	AvailabilityZones []string `json:"availabilityZones,omitempty"`
+	// SubnetIDs specifies which subnets are used for the
+	// auto scaling group of this nodegroup
+	// +optional
+	SubnetIDs []*string `json:"subnetIDs,omitempty"`
+	// AdditionalTags is an optional set of tags to add to AWS resources managed by the AWS provider, in addition to the
+	// ones added by default.
+	// +optional
+	AdditionalTags map[string]*string `json:"additionalTags,omitempty"`
+	// AMIVersion defines the desired AMI release version. If no version number
+	// is supplied then the latest version for the Kubernetes version
+	// will be used
+	// +optional
+	AMIVersion string `json:"amiVersion,omitempty"`
+	// AMIType defines the AMI type
+	// +kubebuilder:validation:Enum:=AL2_x86_64;AL2_x86_64_GPU;AL2_ARM_64;CUSTOM
+	// +kubebuilder:default:=AL2_x86_64
+	// +optional
+	AMIType ManagedMachineAMIType `json:"amiType,omitempty"`
+	// Labels specifies labels for the Kubernetes node objects
+	// +optional
+	Labels map[string]*string `json:"labels,omitempty"`
+	// DiskSize specifies the root disk size
+	// +optional
+	DiskSize int32 `json:"diskSize,omitempty"`
+
+	// InstanceType specifies the AWS instance type
+	// +optional
+	InstanceType *string `json:"instanceType,omitempty"`
+	// Scaling specifies scaling for the ASG behind this pool
+	// +optional
+	Scaling *ManagedMachinePoolScaling `json:"scaling,omitempty"`
+	// MaxUnavailable is the maximum number of nodes unavailable at once during a version update.
+	// Nodes will be updated in parallel. The maximum number is 100.
+	// +optional
+	MaxUnavailable int `json:"maxUnavailable,omitempty"`
 }
 
 type ControlPlane struct {
