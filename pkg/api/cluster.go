@@ -15,7 +15,8 @@ type Cluster struct {
 }
 
 type CloudSpec struct {
-	AWSCloudSpec *AWSCloudSpec `json:"aws,omitempty"`
+	AWSCloudSpec   *AWSCloudSpec   `json:"aws,omitempty"`
+	AzureCloudSpec *AzureCloudSpec `json:"azure,omitempty"`
 }
 
 type Workers struct {
@@ -24,9 +25,11 @@ type Workers struct {
 }
 
 type WorkersSpec struct {
-	AWSWorkers *AWSWorkers `json:"aws,omitempty"`
+	AWSWorkers   *AWSWorkers   `json:"aws,omitempty"`
+	AzureWorkers *AzureWorkers `json:"azure,omitempty"`
 }
 
 type DefaultsWorker struct {
-	AWSDefaultWorker *AWSDefaultWorker `json:"aws,omitempty"`
+	AWSDefaultWorker   *AWSDefaultWorker   `json:"aws,omitempty"`
+	AzureDefaultWorker *AzureDefaultWorker `json:"azure,omitempty"`
 }

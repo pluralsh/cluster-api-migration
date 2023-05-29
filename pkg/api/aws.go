@@ -203,12 +203,6 @@ type UpdateConfig struct {
 	MaxUnavailablePercentage *int `json:"maxUnavailablePercentage,omitempty"`
 }
 
-// ManagedMachinePoolScaling specifies scaling options.
-type ManagedMachinePoolScaling struct {
-	MinSize int32 `json:"minSize,omitempty"`
-	MaxSize int32 `json:"maxSize,omitempty"`
-}
-
 type AWSDefaultWorker struct {
 	AWSWorker `json:",inline"`
 }

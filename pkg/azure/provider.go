@@ -12,9 +12,9 @@ import (
 )
 
 type Provider struct {
-	subsctiptionId string
-	clientId string
-	clientSecret string
+	subsctiptionId        string
+	clientId              string
+	clientSecret          string
 	resourceGroupClient   *armresources.ResourceGroupsClient
 	managedClustersClient *armcontainerservice.ManagedClustersClient
 }
@@ -36,14 +36,14 @@ func GetProvider(ctx context.Context, clusterName, resourceGroupName string) (*P
 	}
 
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
-    if err != nil {
-        log.Fatalf("authentication failure: %+v", err)
-    }
+	if err != nil {
+		log.Fatalf("authentication failure: %+v", err)
+	}
 
 	clientFactory, err := armresources.NewClientFactory(subscriptionId, cred, nil)
-    if err != nil {
-        log.Fatalf("cannot create client factory: %+v", err)
-    }
+	if err != nil {
+		log.Fatalf("cannot create client factory: %+v", err)
+	}
 
 	resourceGroupClient := clientFactory.NewResourceGroupsClient()
 
@@ -55,10 +55,10 @@ func GetProvider(ctx context.Context, clusterName, resourceGroupName string) (*P
 	managedClustersClient := csClientFactory.NewManagedClustersClient()
 
 	return &Provider{
-		subsctiptionId: subscriptionId,
-		clientId: clientId,
-		clientSecret: clientSecret,
-		resourceGroupClient: resourceGroupClient,
+		subsctiptionId:        subscriptionId,
+		clientId:              clientId,
+		clientSecret:          clientSecret,
+		resourceGroupClient:   resourceGroupClient,
 		managedClustersClient: managedClustersClient,
 	}, nil
 }
