@@ -69,14 +69,13 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*st
 		return nil, err
 	}
 
-	fmt.Println(provider)
-
 	cluster, err := provider.managedClustersClient.Get(ctx, resourceGroupName, clusterName, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(cluster.Name)
+	fmt.Println(*cluster.Name)
+	fmt.Println(*cluster.SKU.Name)
 
 	return nil, nil
 }
