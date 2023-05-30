@@ -9,3 +9,5 @@ const (
 	LinuxOS   = "Linux"
 	WindowsOS = "Windows"
 )
+
+type Labels map[string]string
