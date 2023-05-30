@@ -43,10 +43,6 @@ type AzureCloudSpec struct {
 	SSHPublicKey string `json:"sshPublicKey"`
 }
 
-type AzureDefaultWorker struct {
-	AzureWorker `json:",inline"`
-}
-
 type AzureWorkers map[string]AzureWorker
 
 type AzureWorker struct {

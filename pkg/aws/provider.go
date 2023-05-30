@@ -60,7 +60,7 @@ func GetProvider(ctx context.Context, clusterName, region string) (*Provider, er
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &Provider{
 		ClusterProvider:   clusterProvider,
 		NodeGroupProvider: nodeGroupManager,
@@ -177,14 +177,12 @@ func GetCluster(ctx context.Context, clusterName, region string) (*clusterapi.Cl
 		},
 		Workers: clusterapi.Workers{
 			Defaults: clusterapi.DefaultsWorker{
-				AWSDefaultWorker: &clusterapi.AWSDefaultWorker{
-					AWSWorker: clusterapi.AWSWorker{
-						Replicas:    0,
-						Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
-						Spec: clusterapi.AWSWorkerSpec{
-							AMIType:      "AL2_x86_64",
-							CapacityType: "onDemand",
-						},
+				AWSDefaultWorker: &clusterapi.AWSWorker{
+					Replicas:    0,
+					Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
+					Spec: clusterapi.AWSWorkerSpec{
+						AMIType:      "AL2_x86_64",
+						CapacityType: "onDemand",
 					},
 				},
 			},

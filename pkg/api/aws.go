@@ -203,10 +203,6 @@ type UpdateConfig struct {
 	MaxUnavailablePercentage *int `json:"maxUnavailablePercentage,omitempty"`
 }
 
-type AWSDefaultWorker struct {
-	AWSWorker `json:",inline"`
-}
-
 type AWSWorkers map[string]AWSWorker
 
 type AWSWorker struct {

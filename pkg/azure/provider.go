@@ -106,6 +106,14 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*ap
 		Provider: providerName,
 		Type:     clusterType,
 		Cluster:  outputCluster,
-		Workers:  api.Workers{},
+		Workers: api.Workers{
+			Defaults: api.DefaultsWorker{
+				AzureDefaultWorker: getAzureWorkerDefaults(),
+			},
+		},
 	}, nil
+}
+
+func getAzureWorkerDefaults() *api.AzureWorker {
+	return &api.AzureWorker{}
 }
