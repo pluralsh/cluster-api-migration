@@ -44,16 +44,16 @@ type AzureCloudSpec struct {
 }
 
 type AzureDefaultWorker struct {
-	AWSWorker `json:",inline"`
+	AzureWorker `json:",inline"`
 }
 
-type AzureWorkers map[string]AWSWorker
+type AzureWorkers map[string]AzureWorker
 
 type AzureWorker struct {
 	Replicas    int                `json:"replicas"`
 	Labels      map[string]*string `json:"labels,omitempty"`
 	Annotations map[string]string  `json:"annotations,omitempty"`
-	Spec        AWSWorkerSpec      `json:"spec"`
+	Spec        AzureWorkerSpec    `json:"spec"`
 }
 
 type AzureWorkerSpec struct {
