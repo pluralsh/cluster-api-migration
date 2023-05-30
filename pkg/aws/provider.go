@@ -6,22 +6,22 @@ import (
 	"strings"
 	"time"
 
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
 	"github.com/aws/amazon-ec2-instance-selector/v2/pkg/selector"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/weaveworks/eksctl/pkg/actions/addon"
-	"github.com/weaveworks/eksctl/pkg/actions/nodegroup"
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
 	clusterapi "github.com/pluralsh/cluster-api-migration/pkg/api"
 	migrationapi "github.com/pluralsh/cluster-api-migration/pkg/api"
+	"github.com/weaveworks/eksctl/pkg/actions/addon"
+	"github.com/weaveworks/eksctl/pkg/actions/nodegroup"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/eks"
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
 type Provider struct {
@@ -65,7 +65,7 @@ func GetProvider(ctx context.Context, clusterName, region string) (*Provider, er
 	}, nil
 }
 
-func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.Cluster, error) {
+func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.ClusterAPI, error) {
 	provider, err := GetProvider(ctx, clusterName, region)
 	if err != nil {
 		return nil, err
@@ -127,42 +127,67 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 		return nil, fmt.Errorf("couldn't find the VPC %s", *cluster.ResourcesVpcConfig.VpcId)
 	}
 	vpc := vpcs.Vpcs[0]
-
-	newCluster := &migrationapi.Cluster{
-		ControlPlane: ControlPlane{
-			Region:     region,
-			SSHKeyName: "default",
-			Version:    fmt.Sprintf("v%s", *cluster.Version),
-			ControlPlaneEndpoint: clusterv1.APIEndpoint{
-				Host: *cluster.Endpoint,
-				Port: 443,
-			},
-			Labels:                nil,
-			Addons:                []Addon{},
-			AssociateOIDCProvider: false,
-			Bastion: infrav1.Bastion{
-				AllowedCIDRBlocks: cluster.ResourcesVpcConfig.PublicAccessCidrs,
-			},
-			IdentityRef: &infrav1.AWSIdentityReference{
-				Name: "default",
-				Kind: infrav1.ControllerIdentityKind,
-			},
-			NetworkSpec: infrav1.NetworkSpec{
-				VPC: infrav1.VPCSpec{
-					ID:                         *vpc.VpcId,
-					CidrBlock:                  *vpc.CidrBlock,
-					Tags:                       map[string]string{},
-					AvailabilityZoneSelection:  &infrav1.AZSelectionSchemeOrdered,
-					AvailabilityZoneUsageLimit: &azLimit,
+	newCluster := &migrationapi.ClusterAPI{
+		Provider: "aws",
+		Type:     "managed",
+		Cluster: migrationapi.Cluster{
+			Name:              clusterName,
+			CIDRBlocks:        []string{*vpc.CidrBlock},
+			KubernetesVersion: fmt.Sprintf("v%s", *cluster.Version),
+			CloudSpec: migrationapi.CloudSpec{
+				AWSCloudSpec: &clusterapi.AWSCloudSpec{
+					Region:     region,
+					SSHKeyName: "default",
+					Version:    "",
+					RoleName:   "",
+					ControlPlaneEndpoint: clusterv1.APIEndpoint{
+						Host: *cluster.Endpoint,
+						Port: 443,
+					},
+					Addons:                []clusterapi.Addon{},
+					AssociateOIDCProvider: false,
+					Bastion: infrav1.Bastion{
+						AllowedCIDRBlocks: cluster.ResourcesVpcConfig.PublicAccessCidrs,
+					},
+					IdentityRef: &infrav1.AWSIdentityReference{
+						Name: "default",
+						Kind: infrav1.ControllerIdentityKind,
+					},
+					NetworkSpec: infrav1.NetworkSpec{
+						VPC: infrav1.VPCSpec{
+							ID:                         *vpc.VpcId,
+							CidrBlock:                  *vpc.CidrBlock,
+							Tags:                       map[string]string{},
+							AvailabilityZoneSelection:  &infrav1.AZSelectionSchemeOrdered,
+							AvailabilityZoneUsageLimit: &azLimit,
+						},
+					},
+					KubeProxy: migrationapi.KubeProxy{
+						Disable: false,
+					},
+					VpcCni: migrationapi.VpcCni{
+						Disable: false,
+					},
+					TokenMethod: migrationapi.EKSTokenMethodIAMAuthenticator,
 				},
 			},
-			KubeProxy: KubeProxy{
-				Disable: false,
+		},
+		Workers: migrationapi.Workers{
+			Defaults: migrationapi.DefaultsWorker{
+				AWSDefaultWorker: &migrationapi.AWSDefaultWorker{
+					migrationapi.AWSWorker{
+						Replicas:    0,
+						Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
+						Spec: migrationapi.AWSWorkerSpec{
+							AMIType:      "AL2_x86_64",
+							CapacityType: "onDemand",
+						},
+					},
+				},
 			},
-			VpcCni: VpcCni{
-				Disable: false,
+			WorkersSpec: migrationapi.WorkersSpec{
+				AWSWorkers: &migrationapi.AWSWorkers{},
 			},
-			TokenMethod: EKSTokenMethodIAMAuthenticator,
 		},
 	}
 
@@ -187,42 +212,52 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 			}
 			availabilityZones = append(availabilityZones, *subnets.Subnets[0].AvailabilityZone)
 		}
-
-		newCluster.MachinePools = append(newCluster.MachinePools, MachinePool{
-			AvailabilityZones: availabilityZones,
-			EKSNodegroupName:  *nodeGroup.Nodegroup.NodegroupName,
-			SubnetIDs:         nodeGroup.Nodegroup.Subnets,
-			AdditionalTags:    nodeGroup.Nodegroup.Tags,
-			AMIVersion:        *nodeGroup.Nodegroup.Version,
-			AMIType:           ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
-			Labels:            nodeGroup.Nodegroup.Labels,
-			DiskSize:          int32(*nodeGroup.Nodegroup.DiskSize),
-			InstanceType:      nodeGroup.Nodegroup.InstanceTypes[0],
-			Scaling: &ManagedMachinePoolScaling{
-				MinSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MinSize),
-				MaxSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MaxSize),
+		workers := *newCluster.Workers.AWSWorkers
+		workers[*ng] = migrationapi.AWSWorker{
+			Replicas:    int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
+			Labels:      nil,
+			Annotations: nil,
+			Spec: migrationapi.AWSWorkerSpec{
+				Labels:       nodeGroup.Nodegroup.Labels,
+				AMIVersion:   *nodeGroup.Nodegroup.Version,
+				AMIType:      migrationapi.ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
+				DiskSize:     int32(*nodeGroup.Nodegroup.DiskSize),
+				InstanceType: nodeGroup.Nodegroup.InstanceTypes[0],
+				Scaling: &migrationapi.ManagedMachinePoolScaling{
+					MinSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MinSize),
+					MaxSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MaxSize),
+				},
+				AvailabilityZones: availabilityZones,
+				SubnetIDs:         nodeGroup.Nodegroup.Subnets,
+				Taints:            nil,
+				UpdateConfig:      nil,
+				AdditionalTags: func(tags map[string]*string) infrav1.Tags {
+					newTags := infrav1.Tags{}
+					for key, value := range tags {
+						newTags[key] = *value
+					}
+					return newTags
+				}(nodeGroup.Nodegroup.Tags),
 			},
-			MaxUnavailable: int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
-		})
-
+		}
 	}
 
 	for _, vpcTag := range vpc.Tags {
-		newCluster.ControlPlane.NetworkSpec.VPC.Tags[*vpcTag.Key] = *vpcTag.Value
+		newCluster.Cluster.AWSCloudSpec.NetworkSpec.VPC.Tags[*vpcTag.Key] = *vpcTag.Value
 	}
 
 	role := strings.Split(*cluster.RoleArn, "role/")
 	if len(role) == 2 {
-		newCluster.ControlPlane.RoleName = role[1]
+		newCluster.Cluster.AWSCloudSpec.RoleName = role[1]
 	}
 	if cluster.Identity != nil && cluster.Identity.Oidc != nil {
-		newCluster.ControlPlane.AssociateOIDCProvider = true
+		newCluster.Cluster.AWSCloudSpec.AssociateOIDCProvider = true
 	}
 	for _, addon := range addons {
-		newCluster.ControlPlane.Addons = append(newCluster.ControlPlane.Addons, Addon{
+		newCluster.Cluster.AWSCloudSpec.Addons = append(newCluster.Cluster.AWSCloudSpec.Addons, migrationapi.Addon{
 			Name:               addon.Name,
 			Version:            addon.Version,
-			ConflictResolution: AddonResolutionOverwrite,
+			ConflictResolution: migrationapi.AddonResolutionOverwrite,
 		})
 	}
 	for _, subnet := range subnets.Subnets {
@@ -264,20 +299,8 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 			sub.Tags[*tag.Key] = *tag.Value
 		}
 
-		newCluster.ControlPlane.NetworkSpec.Subnets = append(newCluster.ControlPlane.NetworkSpec.Subnets, sub)
+		newCluster.Cluster.AWSCloudSpec.NetworkSpec.Subnets = append(newCluster.Cluster.AWSCloudSpec.NetworkSpec.Subnets, sub)
 	}
 
 	return newCluster, nil
-}
-
-func GenerateModel(ctx context.Context, clusterName, region string) (string, error) {
-	cluster := clusterapi.Cluster{
-		Name:              clusterName,
-		CIDRBlocks:        nil,
-		KubernetesVersion: "",
-		CloudSpec: clusterapi.CloudSpec{
-			AWSCloudSpec: &clusterapi.AWSCloudSpec{},
-		},
-	}
-	return "", nil
 }
