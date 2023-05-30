@@ -51,7 +51,7 @@ type WorkersSpec struct {
 }
 
 type DefaultsWorker struct {
-	AWSDefaultWorker   *AWSDefaultWorker   `json:"aws,omitempty"`
-	AzureDefaultWorker *AzureDefaultWorker `json:"azure,omitempty"`
+	AWSDefaultWorker   *AWSWorker   `json:"aws,omitempty"`
+	AzureDefaultWorker *AzureWorker `json:"azure,omitempty"`
 	GCPDefaultWorker   *GCPDefaultWorker   `json:"google,omitempty"`
 }

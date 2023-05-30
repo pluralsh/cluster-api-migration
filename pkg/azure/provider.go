@@ -11,6 +11,11 @@ import (
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
+const (
+	providerName = "azure"
+	clusterType  = "managed"
+)
+
 type Provider struct {
 	subsctiptionId        string
 	clientId              string
@@ -63,7 +68,7 @@ func GetProvider(ctx context.Context, clusterName, resourceGroupName string) (*P
 	}, nil
 }
 
-func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*api.Cluster, error) {
+func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*api.ClusterAPI, error) {
 	provider, err := GetProvider(ctx, clusterName, resourceGroupName)
 	if err != nil {
 		return nil, err
@@ -74,7 +79,7 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*ap
 		return nil, err
 	}
 
-	output := &api.Cluster{
+	outputCluster := api.Cluster{
 		Name:              *cluster.Name,
 		CIDRBlocks:        nil,
 		KubernetesVersion: *cluster.Properties.KubernetesVersion,
@@ -97,9 +102,18 @@ func GetCluster(ctx context.Context, clusterName, resourceGroupName string) (*ap
 		},
 	}
 
-	// TODO: Fill.
-	// TODO: Add workers.
-	// TODO: Add more props here and to plural-artifacts.
+	return &api.ClusterAPI{ // TODO: Fill.
+		Provider: providerName,
+		Type:     clusterType,
+		Cluster:  outputCluster,
+		Workers: api.Workers{
+			Defaults: api.DefaultsWorker{
+				AzureDefaultWorker: getAzureWorkerDefaults(),
+			},
+		},
+	}, nil
+}
 
-	return output, nil
+func getAzureWorkerDefaults() *api.AzureWorker {
+	return &api.AzureWorker{}
 }
