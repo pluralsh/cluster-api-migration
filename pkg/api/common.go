@@ -5,3 +5,5 @@ type ManagedMachinePoolScaling struct {
 	MinSize int32 `json:"minSize,omitempty"`
 	MaxSize int32 `json:"maxSize,omitempty"`
 }
+
+type Labels map[string]string

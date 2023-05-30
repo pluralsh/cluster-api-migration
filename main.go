@@ -1,42 +1,64 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"encoding/base64"
 	"os"
 
-	"github.com/pluralsh/cluster-api-migration/pkg/aws"
-	"github.com/pluralsh/cluster-api-migration/pkg/azure"
+	"github.com/pluralsh/cluster-api-migration/pkg/api"
+	"github.com/pluralsh/cluster-api-migration/pkg/migrator"
 )
 
 const (
-	provider = "azure"
+	provider = "google"
 )
 
+//func main() {
+//	if provider == "aws" {
+//		os.Setenv("AWS_ACCESS_KEY_ID", "")
+//		os.Setenv("AWS_SECRET_ACCESS_KEY", "")
+//		os.Setenv("AWS_SESSION_TOKEN", "")
+//		os.Setenv("AWS_REGION", "eu-central-1")
+//
+//		//cluster, err := aws.GetCluster(context.Background(), "test-aws", "eu-central-1")
+//		//if err != nil {
+//		//	fmt.Println(err)
+//		//}
+//
+//		//fmt.Printf("cluster %v", cluster)
+//	} else if provider == "azure" {
+//		// Azure client requires below variables being set:
+//		// - AZURE_SUBSCRIPTION_ID
+//		// - AZURE_CLIENT_ID
+//		// - AZURE_CLIENT_SECRET
+//
+//		cluster, err := azure.GetCluster(context.Background(), "plrltest2", "plural")
+//		if err != nil {
+//			fmt.Println(err)
+//		}
+//
+//		fmt.Printf("cluster %v", cluster)
+//	} else if provider == "google" {
+//		project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
+//		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
+//		provider := gcp.NewGCPProvider(string(credentials))
+//		provider.GetCluster(project, region, name)
+//	}
+//}
+
 func main() {
-	if provider == "aws" {
-		os.Setenv("AWS_ACCESS_KEY_ID", "")
-		os.Setenv("AWS_SECRET_ACCESS_KEY", "")
-		os.Setenv("AWS_SESSION_TOKEN", "")
-		os.Setenv("AWS_REGION", "eu-central-1")
+	// TODO: Read from input
+	prov := api.ClusterProviderGoogle
+	project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
 
-		cluster, err := aws.GetCluster(context.Background(), "test-aws", "eu-central-1")
-		if err != nil {
-			fmt.Println(err)
-		}
+	credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
+	m := migrator.NewMigrator(prov, &api.Configuration{
+		GCPConfiguration: &api.GCPConfiguration{
+			Credentials: string(credentials),
+			Project:     project,
+			Region:      region,
+			Name:        name,
+		},
+	})
 
-		fmt.Printf("cluster %v", cluster)
-	} else if provider == "azure" {
-		// Azure client requires below variables being set:
-		// - AZURE_SUBSCRIPTION_ID
-		// - AZURE_CLIENT_ID
-		// - AZURE_CLIENT_SECRET
-
-		cluster, err := azure.GetCluster(context.Background(), "plrltest2", "plural")
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Printf("cluster %v", cluster)
-	}
+	m.Convert()
 }
