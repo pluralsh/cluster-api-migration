@@ -1,5 +1,9 @@
 package api
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // Following specs should match ones from plural-artifacts repository.
 
 type AzureCloudSpec struct {
@@ -9,6 +13,13 @@ type AzureCloudSpec struct {
 	// Type of Azure Identity used.
 	// One of: ServicePrincipal, ServicePrincipalCertificate, UserAssignedMSI or ManualServicePrincipal.
 	ClusterIdentityType IdentityType `json:"clusterIdentityType,omitempty"`
+
+	// AllowedNamespaces is used to identify the namespaces the clusters are allowed to use the identity from.
+	// Namespaces can be selected either using an array of namespaces or with label selector.
+	// An empty allowedNamespaces object indicates that AzureClusters can use this identity from any namespace.
+	// If this object is nil, no namespaces will be allowed (default behaviour, if this field is not provided)
+	// A namespace should be either in the NamespaceList or match with Selector to use the identity.
+	AllowedNamespaces *AllowedNamespaces `json:"allowedNamespaces"`
 
 	// Service Principal client ID. Both Service Principal and User Assigned MSI can use this field.
 	ClientID string `json:"clientID"`
@@ -35,8 +46,65 @@ type AzureCloudSpec struct {
 	// Name of the Azure resource group for this AKS Cluster.
 	ResourceGroupName string `json:"resourceGroupName"`
 
+	// NodeResourceGroupName is the name of the resource group
+	// containing cluster IaaS resources. Will be populated to default
+	// in webhook.
+	NodeResourceGroupName string `json:"nodeResourceGroupName,omitempty"`
+
+	// VirtualNetwork describes the vnet for the AKS cluster. Will be created if it does not exist.
+	VirtualNetwork ManagedControlPlaneVirtualNetwork `json:"virtualNetwork,omitempty"`
+
+	// NetworkPlugin used for building Kubernetes network.
+	// +kubebuilder:validation:Enum=azure;kubenet
+	// +optional
+	NetworkPlugin *string `json:"networkPlugin,omitempty"`
+
+	// NetworkPolicy used for building Kubernetes network.
+	// +kubebuilder:validation:Enum=azure;calico
+	// +optional
+	NetworkPolicy *string `json:"networkPolicy,omitempty"`
+
+	// Outbound configuration used by Nodes.
+	// +kubebuilder:validation:Enum=loadBalancer;managedNATGateway;userAssignedNATGateway;userDefinedRouting
+	// +optional
+	OutboundType *ManagedControlPlaneOutboundType `json:"outboundType,omitempty"`
+
+	// DNSServiceIP is an IP address assigned to the Kubernetes DNS service.
+	// It must be within the Kubernetes service address range specified in serviceCidr.
+	// +optional
+	DNSServiceIP *string `json:"dnsServiceIP,omitempty"`
+
+	// SKU is the SKU of the AKS to be provisioned.
+	// +optional
+	SKU *AKSSku `json:"sku,omitempty"`
+
+	// LoadBalancerSKU is the SKU of the loadBalancer to be provisioned.
+	// +kubebuilder:validation:Enum=Basic;Standard
+	// +optional
+	LoadBalancerSKU *string `json:"loadBalancerSKU,omitempty"`
+
 	// String literal containing an SSH public key base64 encoded.
 	SSHPublicKey string `json:"sshPublicKey"`
+
+	// LoadBalancerProfile is the profile of the cluster load balancer.
+	// +optional
+	LoadBalancerProfile *LoadBalancerProfile `json:"loadBalancerProfile,omitempty"`
+
+	// APIServerAccessProfile is the access profile for AKS API server.
+	// +optional
+	APIServerAccessProfile *APIServerAccessProfile `json:"apiServerAccessProfile,omitempty"`
+
+	// AutoscalerProfile is the parameters to be applied to the cluster-autoscaler when enabled
+	// +optional
+	AutoScalerProfile *AutoScalerProfile `json:"autoscalerProfile,omitempty"`
+
+	// AadProfile is Azure Active Directory configuration to integrate with AKS for aad authentication.
+	// +optional
+	AADProfile *AADProfile `json:"aadProfile,omitempty"`
+
+	// AddonProfiles are the profiles of managed cluster add-on.
+	// +optional
+	AddonProfiles []AddonProfile `json:"addonProfiles,omitempty"`
 }
 
 type AzureWorkers map[string]AzureWorker
@@ -65,6 +133,147 @@ type AzureWorkerSpec struct {
 	KubeletDiskType      *KubeletDiskType           `json:"kubeletDiskType,omitempty"`
 	LinuxOSConfig        *LinuxOSConfig             `json:"linuxOSConfig,omitempty"`
 	ScaleSetPriority     *string                    `json:"scaleSetPriority,omitempty"`
+}
+
+type AllowedNamespaces struct {
+	NamespaceList []string              `json:"list"`
+	Selector      *metav1.LabelSelector `json:"selector"`
+}
+
+type ManagedControlPlaneVirtualNetwork struct {
+	Name          string                    `json:"name"`
+	CIDRBlock     string                    `json:"cidrBlock"`
+	Subnet        ManagedControlPlaneSubnet `json:"subnet,omitempty"`
+	ResourceGroup string                    `json:"resourceGroup,omitempty"`
+}
+
+type ManagedControlPlaneSubnet struct {
+	Name             string           `json:"name"`
+	CIDRBlock        string           `json:"cidrBlock"`
+	ServiceEndpoints ServiceEndpoints `json:"serviceEndpoints,omitempty"`
+	PrivateEndpoints PrivateEndpoints `json:"privateEndpoints,omitempty"`
+}
+
+type ServiceEndpoints []ServiceEndpointSpec
+
+type ServiceEndpointSpec struct {
+	Service   string   `json:"service"`
+	Locations []string `json:"locations"`
+}
+
+type PrivateEndpoints []PrivateEndpointSpec
+
+type PrivateEndpointSpec struct {
+	Name                          string                         `json:"name"`
+	Location                      string                         `json:"location,omitempty"`
+	PrivateLinkServiceConnections []PrivateLinkServiceConnection `json:"privateLinkServiceConnections,omitempty"`
+	CustomNetworkInterfaceName    string                         `json:"customNetworkInterfaceName,omitempty"`
+	PrivateIPAddresses            []string                       `json:"privateIPAddresses,omitempty"`
+	ApplicationSecurityGroups     []string                       `json:"applicationSecurityGroups,omitempty"`
+	ManualApproval                bool                           `json:"manualApproval,omitempty"`
+}
+
+type PrivateLinkServiceConnection struct {
+	Name                 string   `json:"name,omitempty"`
+	PrivateLinkServiceID string   `json:"privateLinkServiceID,omitempty"`
+	GroupIDs             []string `json:"groupIDs,omitempty"`
+	RequestMessage       string   `json:"requestMessage,omitempty"`
+}
+
+type ManagedControlPlaneOutboundType string
+
+const (
+	ManagedControlPlaneOutboundTypeLoadBalancer           ManagedControlPlaneOutboundType = "loadBalancer"
+	ManagedControlPlaneOutboundTypeManagedNATGateway      ManagedControlPlaneOutboundType = "managedNATGateway"
+	ManagedControlPlaneOutboundTypeUserAssignedNATGateway ManagedControlPlaneOutboundType = "userAssignedNATGateway"
+	ManagedControlPlaneOutboundTypeUserDefinedRouting     ManagedControlPlaneOutboundType = "userDefinedRouting"
+)
+
+type AADProfile struct {
+	Managed             bool     `json:"managed"`
+	AdminGroupObjectIDs []string `json:"adminGroupObjectIDs"`
+}
+
+type AddonProfile struct {
+	Name    string            `json:"name"`
+	Config  map[string]string `json:"config,omitempty"`
+	Enabled bool              `json:"enabled"`
+}
+
+type AutoScalerProfile struct {
+	BalanceSimilarNodeGroups      *BalanceSimilarNodeGroups  `json:"balanceSimilarNodeGroups,omitempty"`
+	Expander                      *Expander                  `json:"expander,omitempty"`
+	MaxEmptyBulkDelete            *string                    `json:"maxEmptyBulkDelete,omitempty"`
+	MaxGracefulTerminationSec     *string                    `json:"maxGracefulTerminationSec,omitempty"`
+	MaxNodeProvisionTime          *string                    `json:"maxNodeProvisionTime,omitempty"`
+	MaxTotalUnreadyPercentage     *string                    `json:"maxTotalUnreadyPercentage,omitempty"`
+	NewPodScaleUpDelay            *string                    `json:"newPodScaleUpDelay,omitempty"`
+	OkTotalUnreadyCount           *string                    `json:"okTotalUnreadyCount,omitempty"`
+	ScanInterval                  *string                    `json:"scanInterval,omitempty"`
+	ScaleDownDelayAfterAdd        *string                    `json:"scaleDownDelayAfterAdd,omitempty"`
+	ScaleDownDelayAfterDelete     *string                    `json:"scaleDownDelayAfterDelete,omitempty"`
+	ScaleDownDelayAfterFailure    *string                    `json:"scaleDownDelayAfterFailure,omitempty"`
+	ScaleDownUnneededTime         *string                    `json:"scaleDownUnneededTime,omitempty"`
+	ScaleDownUnreadyTime          *string                    `json:"scaleDownUnreadyTime,omitempty"`
+	ScaleDownUtilizationThreshold *string                    `json:"scaleDownUtilizationThreshold,omitempty"`
+	SkipNodesWithLocalStorage     *SkipNodesWithLocalStorage `json:"skipNodesWithLocalStorage,omitempty"`
+	SkipNodesWithSystemPods       *SkipNodesWithSystemPods   `json:"skipNodesWithSystemPods,omitempty"`
+}
+
+type BalanceSimilarNodeGroups string
+
+const (
+	BalanceSimilarNodeGroupsTrue  BalanceSimilarNodeGroups = "true"
+	BalanceSimilarNodeGroupsFalse BalanceSimilarNodeGroups = "false"
+)
+
+type Expander string
+
+const (
+	ExpanderLeastWaste Expander = "least-waste"
+	ExpanderMostPods   Expander = "most-pods"
+	ExpanderPriority   Expander = "priority"
+	ExpanderRandom     Expander = "random"
+)
+
+type SkipNodesWithLocalStorage string
+
+const (
+	SkipNodesWithLocalStorageTrue  SkipNodesWithLocalStorage = "true"
+	SkipNodesWithLocalStorageFalse SkipNodesWithLocalStorage = "false"
+)
+
+type SkipNodesWithSystemPods string
+
+const (
+	SkipNodesWithSystemPodsTrue  SkipNodesWithSystemPods = "true"
+	SkipNodesWithSystemPodsFalse SkipNodesWithSystemPods = "false"
+)
+
+type AzureManagedControlPlaneSkuTier string
+
+const (
+	FreeManagedControlPlaneTier AzureManagedControlPlaneSkuTier = "Free"
+	PaidManagedControlPlaneTier AzureManagedControlPlaneSkuTier = "Paid"
+)
+
+type AKSSku struct {
+	Tier AzureManagedControlPlaneSkuTier `json:"tier"`
+}
+
+type LoadBalancerProfile struct {
+	ManagedOutboundIPs     *int32   `json:"managedOutboundIPs,omitempty"`
+	OutboundIPPrefixes     []string `json:"outboundIPPrefixes,omitempty"`
+	OutboundIPs            []string `json:"outboundIPs,omitempty"`
+	AllocatedOutboundPorts *int32   `json:"allocatedOutboundPorts,omitempty"`
+	IdleTimeoutInMinutes   *int32   `json:"idleTimeoutInMinutes,omitempty"`
+}
+
+type APIServerAccessProfile struct {
+	AuthorizedIPRanges             []string `json:"authorizedIPRanges,omitempty"`
+	EnablePrivateCluster           *bool    `json:"enablePrivateCluster,omitempty"`
+	PrivateDNSZone                 *string  `json:"privateDNSZone,omitempty"`
+	EnablePrivateClusterPublicFQDN *bool    `json:"enablePrivateClusterPublicFQDN,omitempty"`
 }
 
 type Tags map[string]string
