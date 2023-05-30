@@ -6,11 +6,34 @@ import (
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/migrator"
+	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 const (
-	provider = "google"
+	provider = api.ClusterProviderGoogle
 )
+
+func newConfiguration(provider api.ClusterProvider) *api.Configuration {
+	switch provider {
+	case api.ClusterProviderGoogle:
+		project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
+		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
+
+		return &api.Configuration{
+			GCPConfiguration: &api.GCPConfiguration{
+				Credentials: string(credentials),
+				Project:     project,
+				Region:      region,
+				Name:        name,
+			},
+		}
+	case api.ClusterProviderAWS:
+	case api.ClusterProviderAzure:
+		return nil
+	}
+
+	return nil
+}
 
 //func main() {
 //	if provider == "aws" {
@@ -37,28 +60,12 @@ const (
 //		}
 //
 //		fmt.Printf("cluster %v", cluster)
-//	} else if provider == "google" {
-//		project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
-//		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
-//		provider := gcp.NewGCPProvider(string(credentials))
-//		provider.GetCluster(project, region, name)
 //	}
 //}
 
 func main() {
-	// TODO: Read from input
-	prov := api.ClusterProviderGoogle
-	project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
+	m := migrator.NewMigrator(provider, newConfiguration(provider))
 
-	credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
-	m := migrator.NewMigrator(prov, &api.Configuration{
-		GCPConfiguration: &api.GCPConfiguration{
-			Credentials: string(credentials),
-			Project:     project,
-			Region:      region,
-			Name:        name,
-		},
-	})
-
-	m.Convert()
+	values := m.Convert()
+	resources.NewPrinter(values).PrettyPrint()
 }

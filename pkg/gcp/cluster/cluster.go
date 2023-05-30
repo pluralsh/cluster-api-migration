@@ -49,25 +49,20 @@ func (this *Cluster) KubernetesVersion() string {
 	return this.GetCurrentMasterVersion()
 }
 
-func (this *Cluster) ClusterAPI() *api.Values {
-	return &api.Values{
-		// TODO: Currently only managed type is supported
-		Provider: api.ClusterProviderGoogle,
-		Type:     "managed",
-		Cluster: api.Cluster{
-			Name:              this.GetName(),
-			CIDRBlocks:        this.CIDRBlocks(),
-			KubernetesVersion: this.KubernetesVersion(),
-			CloudSpec: api.CloudSpec{
-				GCPCloudSpec: &api.GCPCloudSpec{
-					Project:                this.Project,
-					Region:                 this.Location,
-					EnableAutopilot:        this.AutopilotEnabled(),
-					EnableWorkloadIdentity: this.WorkloadIdentityEnabled(),
-					ReleaseChannel:         this.ReleaseChannel(),
-					Network:                this.Network(),
-					Subnets:                this.Subnets(),
-				},
+func (this *Cluster) Convert() *api.Cluster {
+	return &api.Cluster{
+		Name:              this.GetName(),
+		CIDRBlocks:        this.CIDRBlocks(),
+		KubernetesVersion: this.KubernetesVersion(),
+		CloudSpec: api.CloudSpec{
+			GCPCloudSpec: &api.GCPCloudSpec{
+				Project:                this.Project,
+				Region:                 this.Location,
+				EnableAutopilot:        this.AutopilotEnabled(),
+				EnableWorkloadIdentity: this.WorkloadIdentityEnabled(),
+				ReleaseChannel:         this.ReleaseChannel(),
+				Network:                this.Network(),
+				Subnets:                this.Subnets(),
 			},
 		},
 	}

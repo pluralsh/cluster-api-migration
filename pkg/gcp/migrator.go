@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
-	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 type Migrator struct {
@@ -13,10 +12,15 @@ type Migrator struct {
 
 func (this *Migrator) Convert() *api.Values {
 	c := this.accessor.GetCluster()
+	w := this.accessor.GetWorkers()
 
-	resources.NewPrinter(c).PrettyPrint()
-
-	return nil
+	return &api.Values{
+		Provider: api.ClusterProviderGoogle,
+		// TODO: currently only managed is supported
+		Type:    "managed",
+		Cluster: *c,
+		Workers: *w,
+	}
 }
 
 func NewGCPMigrator(configuration *api.GCPConfiguration) api.Migrator {

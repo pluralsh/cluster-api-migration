@@ -46,10 +46,6 @@ type GCPCloudSpec struct {
 
 type GCPWorkers map[string]GCPWorker
 
-type GCPDefaultWorker struct {
-	GCPWorker `json:",inline"`
-}
-
 type GCPWorker struct {
 	Replicas         int               `json:"replicas"`
 	Scaling          *GCPWorkerScaling `json:"scaling,omitempty"`

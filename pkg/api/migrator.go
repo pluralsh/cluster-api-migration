@@ -24,5 +24,6 @@ type Migrator interface {
 }
 
 type ClusterAccessor interface {
-	GetCluster() *Values
+	GetCluster() *Cluster
+	GetWorkers() *Workers
 }
