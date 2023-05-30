@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
 	clusterapi "github.com/pluralsh/cluster-api-migration/pkg/api"
-	migrationapi "github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/weaveworks/eksctl/pkg/actions/addon"
 	"github.com/weaveworks/eksctl/pkg/actions/nodegroup"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
@@ -58,6 +57,10 @@ func GetProvider(ctx context.Context, clusterName, region string) (*Provider, er
 	nodeGroupManager := nodegroup.New(cfg, clusterProvider, clientSet, selector.New(clusterProvider.AWSProvider.Session()))
 	stackManager := clusterProvider.NewStackManager(cmd.ClusterConfig)
 	addonManager, err := addon.New(cmd.ClusterConfig, clusterProvider.AWSProvider.EKS(), stackManager, *cmd.ClusterConfig.IAM.WithOIDC, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	
 	return &Provider{
 		ClusterProvider:   clusterProvider,
 		NodeGroupProvider: nodeGroupManager,
@@ -65,7 +68,7 @@ func GetProvider(ctx context.Context, clusterName, region string) (*Provider, er
 	}, nil
 }
 
-func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.ClusterAPI, error) {
+func GetCluster(ctx context.Context, clusterName, region string) (*clusterapi.ClusterAPI, error) {
 	provider, err := GetProvider(ctx, clusterName, region)
 	if err != nil {
 		return nil, err
@@ -127,14 +130,14 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 		return nil, fmt.Errorf("couldn't find the VPC %s", *cluster.ResourcesVpcConfig.VpcId)
 	}
 	vpc := vpcs.Vpcs[0]
-	newCluster := &migrationapi.ClusterAPI{
+	newCluster := &clusterapi.ClusterAPI{
 		Provider: "aws",
 		Type:     "managed",
-		Cluster: migrationapi.Cluster{
+		Cluster: clusterapi.Cluster{
 			Name:              clusterName,
 			CIDRBlocks:        []string{*vpc.CidrBlock},
 			KubernetesVersion: fmt.Sprintf("v%s", *cluster.Version),
-			CloudSpec: migrationapi.CloudSpec{
+			CloudSpec: clusterapi.CloudSpec{
 				AWSCloudSpec: &clusterapi.AWSCloudSpec{
 					Region:     region,
 					SSHKeyName: "default",
@@ -162,31 +165,31 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 							AvailabilityZoneUsageLimit: &azLimit,
 						},
 					},
-					KubeProxy: migrationapi.KubeProxy{
+					KubeProxy: clusterapi.KubeProxy{
 						Disable: false,
 					},
-					VpcCni: migrationapi.VpcCni{
+					VpcCni: clusterapi.VpcCni{
 						Disable: false,
 					},
-					TokenMethod: migrationapi.EKSTokenMethodIAMAuthenticator,
+					TokenMethod: clusterapi.EKSTokenMethodIAMAuthenticator,
 				},
 			},
 		},
-		Workers: migrationapi.Workers{
-			Defaults: migrationapi.DefaultsWorker{
-				AWSDefaultWorker: &migrationapi.AWSDefaultWorker{
-					migrationapi.AWSWorker{
+		Workers: clusterapi.Workers{
+			Defaults: clusterapi.DefaultsWorker{
+				AWSDefaultWorker: &clusterapi.AWSDefaultWorker{
+					AWSWorker: clusterapi.AWSWorker{
 						Replicas:    0,
 						Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
-						Spec: migrationapi.AWSWorkerSpec{
+						Spec: clusterapi.AWSWorkerSpec{
 							AMIType:      "AL2_x86_64",
 							CapacityType: "onDemand",
 						},
 					},
 				},
 			},
-			WorkersSpec: migrationapi.WorkersSpec{
-				AWSWorkers: &migrationapi.AWSWorkers{},
+			WorkersSpec: clusterapi.WorkersSpec{
+				AWSWorkers: &clusterapi.AWSWorkers{},
 			},
 		},
 	}
@@ -213,17 +216,17 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 			availabilityZones = append(availabilityZones, *subnets.Subnets[0].AvailabilityZone)
 		}
 		workers := *newCluster.Workers.AWSWorkers
-		workers[*ng] = migrationapi.AWSWorker{
+		workers[*ng] = clusterapi.AWSWorker{
 			Replicas:    int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
 			Labels:      nil,
 			Annotations: nil,
-			Spec: migrationapi.AWSWorkerSpec{
+			Spec: clusterapi.AWSWorkerSpec{
 				Labels:       nodeGroup.Nodegroup.Labels,
 				AMIVersion:   *nodeGroup.Nodegroup.Version,
-				AMIType:      migrationapi.ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
+				AMIType:      clusterapi.ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
 				DiskSize:     int32(*nodeGroup.Nodegroup.DiskSize),
 				InstanceType: nodeGroup.Nodegroup.InstanceTypes[0],
-				Scaling: &migrationapi.ManagedMachinePoolScaling{
+				Scaling: &clusterapi.ManagedMachinePoolScaling{
 					MinSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MinSize),
 					MaxSize: int32(*nodeGroup.Nodegroup.ScalingConfig.MaxSize),
 				},
@@ -254,10 +257,10 @@ func GetCluster(ctx context.Context, clusterName, region string) (*migrationapi.
 		newCluster.Cluster.AWSCloudSpec.AssociateOIDCProvider = true
 	}
 	for _, addon := range addons {
-		newCluster.Cluster.AWSCloudSpec.Addons = append(newCluster.Cluster.AWSCloudSpec.Addons, migrationapi.Addon{
+		newCluster.Cluster.AWSCloudSpec.Addons = append(newCluster.Cluster.AWSCloudSpec.Addons, clusterapi.Addon{
 			Name:               addon.Name,
 			Version:            addon.Version,
-			ConflictResolution: migrationapi.AddonResolutionOverwrite,
+			ConflictResolution: clusterapi.AddonResolutionOverwrite,
 		})
 	}
 	for _, subnet := range subnets.Subnets {
