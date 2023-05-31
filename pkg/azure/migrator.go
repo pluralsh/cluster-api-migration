@@ -15,6 +15,7 @@ func (migrator *Migrator) Convert() (*api.Values, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	w, err := migrator.accessor.GetWorkers()
 	if err != nil {
 		return nil, err
@@ -36,6 +37,7 @@ func NewAzureMigrator(configuration *api.AzureConfiguration) (api.Migrator, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return &Migrator{
 		accessor: a,
 	}, nil
