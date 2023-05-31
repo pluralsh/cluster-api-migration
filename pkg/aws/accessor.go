@@ -250,8 +250,18 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 				},
 				AvailabilityZones: availabilityZones,
 				SubnetIDs:         nodeGroup.Nodegroup.Subnets,
-				Taints:            nil,
-				UpdateConfig:      nil,
+				Taints: func(taints []*ekssdk.Taint) api.Taints {
+					newTaints := api.Taints{}
+					for _, taint := range taints {
+						newTaints = append(newTaints, api.Taint{
+							Effect: api.TaintEffect(*taint.Effect),
+							Key:    *taint.Key,
+							Value:  *taint.Value,
+						})
+					}
+					return newTaints
+				}(nodeGroup.Nodegroup.Taints),
+				UpdateConfig: nil,
 				AdditionalTags: func(tags map[string]*string) infrav1.Tags {
 					newTags := infrav1.Tags{}
 					for key, value := range tags {
