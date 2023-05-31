@@ -13,8 +13,8 @@ type printer struct {
 	i interface{}
 }
 
-func (this *printer) PrettyPrint() {
-	s, _ := json.MarshalIndent(this.i, "", "  ")
+func (printer *printer) PrettyPrint() {
+	s, _ := json.MarshalIndent(printer.i, "", "  ")
 
 	fmt.Println(string(s))
 }
