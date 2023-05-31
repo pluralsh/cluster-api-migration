@@ -7,54 +7,32 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type PrinterMode string
-
-const (
-	PrinterModeJSON = PrinterMode("json")
-	PrinterModeYAML = PrinterMode("yaml")
-)
-
 type Printer interface {
 	PrettyPrint()
 }
 
-type printer struct {
-	mode PrinterMode
-	i    interface{}
+type jsonPrinter struct {
+	i interface{}
 }
 
-func (this *printer) prettyPrint(mode PrinterMode) {
-	switch mode {
-	case PrinterModeJSON:
-		this.prettyPrintJSON()
-		return
-	case PrinterModeYAML:
-		this.prettyPrintYAML()
-	}
-}
-
-func (this *printer) prettyPrintJSON() {
+func (this *jsonPrinter) PrettyPrint() {
 	s, _ := json.MarshalIndent(this.i, "", "  ")
 	fmt.Println(string(s))
 }
 
-func (this *printer) prettyPrintYAML() {
+type yamlPrinter struct {
+	i interface{}
+}
+
+func (this *yamlPrinter) PrettyPrint() {
 	s, _ := yaml.Marshal(this.i)
 	fmt.Println(string(s))
 }
 
-func (this *printer) PrettyPrint() {
-	this.prettyPrint(this.mode)
-}
-
-func NewPrinter(i interface{}, mode PrinterMode) Printer {
-	return &printer{i: i, mode: mode}
-}
-
 func NewJsonPrinter(i interface{}) Printer {
-	return &printer{i: i, mode: PrinterModeJSON}
+	return &jsonPrinter{i: i}
 }
 
 func NewYAMLPrinter(i interface{}) Printer {
-	return &printer{i: i, mode: PrinterModeYAML}
+	return &yamlPrinter{i: i}
 }
