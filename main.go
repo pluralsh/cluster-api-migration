@@ -7,6 +7,7 @@ import (
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/migrator"
+	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 const (
@@ -31,8 +32,6 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 		config := api.Configuration{
 			AzureConfiguration: &api.AzureConfiguration{
 				SubscriptionID: os.Getenv(api.AzureSubscriptionIdEnvVar),
-				ClientID:       os.Getenv(api.AzureClientIdEnvVar),
-				ClientSecret:   os.Getenv(api.AzureClientSecretEnvVar),
 				ResourceGroup:  "plural",
 				Name:           "plrltest2",
 			},
@@ -69,5 +68,6 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 func main() {
 	m := migrator.NewMigrator(provider, newConfiguration(provider))
 
-	m.Convert()
+	values := m.Convert()
+	resources.NewPrinter(values).PrettyPrint()
 }

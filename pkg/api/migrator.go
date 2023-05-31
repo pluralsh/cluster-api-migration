@@ -22,8 +22,6 @@ type AWSConfiguration struct {
 
 type AzureConfiguration struct {
 	SubscriptionID string
-	ClientID       string
-	ClientSecret   string
 	ResourceGroup  string
 	Name           string
 }
@@ -31,14 +29,6 @@ type AzureConfiguration struct {
 func (this *AzureConfiguration) Validate() error {
 	if len(this.SubscriptionID) == 0 {
 		return fmt.Errorf("subscription ID cannot be empty, ensure that %s evironment variable is set", AzureSubscriptionIdEnvVar)
-	}
-
-	if len(this.ClientID) == 0 {
-		return fmt.Errorf("client ID cannot be empty, ensure that %s evironment variable is set", AzureClientIdEnvVar)
-	}
-
-	if len(this.ClientSecret) == 0 {
-		return fmt.Errorf("client secret cannot be empty, ensure that %s evironment variable is set", AzureClientSecretEnvVar)
 	}
 
 	if len(this.ResourceGroup) == 0 {
