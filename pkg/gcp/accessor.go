@@ -23,11 +23,11 @@ type ClusterAccessor struct {
 	computeClient *compute.Service
 }
 
-func (this *ClusterAccessor) init() api.ClusterAccessor {
+func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	this.initContainerClientOrDie()
 	this.initComputeClientOrDie()
 
-	return this
+	return this, nil
 }
 
 func (this *ClusterAccessor) initContainerClientOrDie() {
@@ -106,18 +106,18 @@ func (this *ClusterAccessor) getSubnetworkOrDie(name string) *compute.Subnetwork
 	return subnetwork
 }
 
-func (this *ClusterAccessor) GetCluster() *api.Cluster {
+func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	c := this.getClusterOrDie()
 	network := this.getNetworkOrDie(c.Network)
 	subnetwork := this.getSubnetworkOrDie(c.Subnetwork)
 	gcpCluster := cluster.NewGCPCluster(this.configuration.Project, c, network, subnetwork)
 
-	return gcpCluster.Convert()
+	return gcpCluster.Convert(), nil
 }
 
-func (this *ClusterAccessor) GetWorkers() *api.Workers {
+func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	cluster := this.getClusterOrDie()
 	workers := worker.NewGCPWorkers(cluster)
 
-	return workers.Convert()
+	return workers.Convert(), nil
 }

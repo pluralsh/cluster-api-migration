@@ -55,7 +55,13 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 }
 
 func main() {
-	m := migrator.NewMigrator(provider, newConfiguration(provider))
-	values := m.Convert()
+	m, err := migrator.NewMigrator(provider, newConfiguration(provider))
+	if err != nil {
+		log.Fatal(err)
+	}
+	values, err := m.Convert()
+	if err != nil {
+		log.Fatal(err)
+	}
 	resources.NewYAMLPrinter(values).PrettyPrint()
 }

@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
@@ -9,23 +10,32 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
-func (m Migrator) Convert() *api.Values {
-	c := m.accessor.GetCluster()
-	w := m.accessor.GetWorkers()
-
+func (m Migrator) Convert() (*api.Values, error) {
+	c, err := m.accessor.GetCluster()
+	if err != nil {
+		return nil, err
+	}
+	w, err := m.accessor.GetWorkers()
+	if err != nil {
+		return nil, err
+	}
 	return &api.Values{
 		Provider: api.ClusterProviderAzure,
 		Type:     api.ClusterTypeManaged,
 		Cluster:  *c,
 		Workers:  *w,
-	}
+	}, nil
 }
 
-func NewAWSMigrator(configuration *api.AWSConfiguration) api.Migrator {
-	return &Migrator{
-		accessor: (&ClusterAccessor{
-			configuration: configuration,
-			ctx:           context.Background(),
-		}).init(),
+func NewAWSMigrator(configuration *api.AWSConfiguration) (api.Migrator, error) {
+	a, err := (&ClusterAccessor{
+		configuration: configuration,
+		ctx:           context.Background(),
+	}).init()
+	if err != nil {
+		return nil, err
 	}
+	return &Migrator{
+		accessor: a,
+	}, nil
 }
