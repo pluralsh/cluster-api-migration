@@ -18,6 +18,8 @@ type Configuration struct {
 }
 
 type AWSConfiguration struct {
+	ClusterName string
+	Region      string
 }
 
 type AzureConfiguration struct {
