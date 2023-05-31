@@ -24,36 +24,41 @@ type ClusterAccessor struct {
 }
 
 func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
-	this.initContainerClientOrDie()
-	this.initComputeClientOrDie()
+	err := this.initContainerClient()
+	if err != nil {
+		return nil, err
+	}
 
-	return this, nil
+	err = this.initComputeClient()
+	return this, err
 }
 
-func (this *ClusterAccessor) initContainerClientOrDie() {
+func (this *ClusterAccessor) initContainerClient() error {
 	client, err := container.NewClusterManagerClient(
 		this.ctx,
 		this.defaultClientOptions(this.configuration.Credentials)...,
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	this.clusterClient = client
+	return nil
 }
 
-func (this *ClusterAccessor) initComputeClientOrDie() {
+func (this *ClusterAccessor) initComputeClient() error {
 	client, err := compute.NewService(
 		this.ctx,
 		this.defaultClientOptions(this.configuration.Credentials)...,
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	this.computeClient = client
+	return nil
 }
 
 func (this *ClusterAccessor) defaultClientOptions(credentials string) []option.ClientOption {
