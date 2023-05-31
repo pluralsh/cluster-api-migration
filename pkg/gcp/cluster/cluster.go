@@ -1,8 +1,8 @@
 package cluster
 
 import (
-	"cloud.google.com/go/compute/apiv1/computepb"
 	"cloud.google.com/go/container/apiv1/containerpb"
+	"google.golang.org/api/compute/v1"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/resources"
@@ -11,9 +11,9 @@ import (
 type Cluster struct {
 	*containerpb.Cluster
 
-	network     *computepb.Network
-	subnetworks *computepb.SubnetworkList
-	project     string
+	network    *compute.Network
+	subnetwork *compute.Subnetwork
+	project    string
 }
 
 func (this *Cluster) AutopilotEnabled() bool {
@@ -74,9 +74,11 @@ func (this *Cluster) Convert() *api.Cluster {
 	}
 }
 
-func NewGCPCluster(project string, cluster *containerpb.Cluster) *Cluster {
+func NewGCPCluster(project string, cluster *containerpb.Cluster, network *compute.Network, subnetwork *compute.Subnetwork) *Cluster {
 	return &Cluster{
-		project: project,
-		Cluster: cluster,
+		project:    project,
+		Cluster:    cluster,
+		network:    network,
+		subnetwork: subnetwork,
 	}
 }

@@ -47,15 +47,15 @@ type GCPCloudSpec struct {
 type GCPWorkers map[string]GCPWorker
 
 type GCPWorker struct {
-	Replicas         int               `json:"replicas"`
+	Replicas         int32             `json:"replicas"`
 	Scaling          *GCPWorkerScaling `json:"scaling,omitempty"`
 	KubernetesLabels *Labels           `json:"kubernetesLabels,omitempty"`
 	AdditionalLabels *Labels           `json:"additionalLabels,omitempty"`
-	KubernetesTains  *Taints           `json:"kubernetesTains,omitempty"`
+	KubernetesTaints *Taints           `json:"kubernetesTaints,omitempty"`
 	ProviderIDList   []string          `json:"providerIDList,omitempty"`
 }
 
 type GCPWorkerScaling struct {
-	MaxCount int `json:"maxCount"`
-	MinCount int `json:"minCount"`
+	MaxCount int32 `json:"maxCount"`
+	MinCount int32 `json:"minCount"`
 }

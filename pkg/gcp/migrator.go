@@ -17,7 +17,7 @@ func (this *Migrator) Convert() *api.Values {
 	return &api.Values{
 		Provider: api.ClusterProviderGoogle,
 		// TODO: currently only managed is supported
-		Type:    "managed",
+		Type:    api.ClusterTypeManaged,
 		Cluster: *c,
 		Workers: *w,
 	}

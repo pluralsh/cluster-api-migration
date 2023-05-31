@@ -7,24 +7,24 @@ import (
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/migrator"
+	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 const (
-	provider = api.ClusterProviderAzure
+	provider = api.ClusterProviderGoogle
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	switch provider {
 	case api.ClusterProviderGoogle:
-		project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
 		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv(api.GCPEncodedCredentialsEnvVar))
 
 		return &api.Configuration{
 			GCPConfiguration: &api.GCPConfiguration{
 				Credentials: string(credentials),
-				Project:     project,
-				Region:      region,
-				Name:        name,
+				Project:     "pluralsh-test-384515",
+				Region:      "europe-central2",
+				Name:        "gcp-capi",
 			},
 		}
 	case api.ClusterProviderAzure:
@@ -69,5 +69,6 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 func main() {
 	m := migrator.NewMigrator(provider, newConfiguration(provider))
 
-	m.Convert()
+	values := m.Convert()
+	resources.NewPrinter(values).PrettyPrint()
 }
