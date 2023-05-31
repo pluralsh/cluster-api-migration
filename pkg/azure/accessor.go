@@ -15,8 +15,9 @@ import (
 type ClusterAccessor struct {
 	configuration         *api.AzureConfiguration
 	ctx                   context.Context
-	resourceGroupClient   *armresources.ResourceGroupsClient
+	resourceGroupClient   *armresources.ResourceGroupsClient // TODO: Remove if it is not needed.
 	managedClustersClient *armcontainerservice.ManagedClustersClient
+	agentPoolsClient      *armcontainerservice.AgentPoolsClient
 }
 
 func (this *ClusterAccessor) init() api.ClusterAccessor {
@@ -38,6 +39,7 @@ func (this *ClusterAccessor) init() api.ClusterAccessor {
 	}
 
 	this.managedClustersClient = csClientFactory.NewManagedClustersClient()
+	this.agentPoolsClient = csClientFactory.NewAgentPoolsClient()
 
 	return this
 }
