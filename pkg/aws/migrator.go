@@ -20,7 +20,7 @@ func (m Migrator) Convert() (*api.Values, error) {
 		return nil, err
 	}
 	return &api.Values{
-		Provider: api.ClusterProviderAzure,
+		Provider: api.ClusterProviderAWS,
 		Type:     api.ClusterTypeManaged,
 		Cluster:  *c,
 		Workers:  *w,
