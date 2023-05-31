@@ -9,7 +9,8 @@ const (
 )
 
 type GCPNetwork struct {
-	AutoCreateSubnetworks bool `json:"autoCreateSubnetworks"`
+	Name                  string `json:"name"`
+	AutoCreateSubnetworks bool   `json:"autoCreateSubnetworks"`
 }
 
 type GCPSubnetPurpose string
@@ -25,7 +26,7 @@ const (
 type GCPSubnets []GCPSubnet
 
 type GCPSubnet struct {
-	NameSuffix          string            `json:"nameSuffix"`
+	Name                string            `json:"name"`
 	CidrBlock           string            `json:"cidrBlock"`
 	Description         string            `json:"description"`
 	SecondaryCidrBlocks map[string]string `json:"secondaryCidrBlocks"`

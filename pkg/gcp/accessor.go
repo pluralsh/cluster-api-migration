@@ -95,6 +95,7 @@ func (this *ClusterAccessor) getNetworkOrDie(name string) *compute.Network {
 }
 
 func (this *ClusterAccessor) getSubnetworkOrDie(name string) *compute.Subnetwork {
+	// TODO: Check if we shouldn't search for all subnets and filter by parent network name
 	req := this.computeClient.Subnetworks.Get(this.configuration.Project, this.configuration.Region, name)
 	subnetwork, err := req.Do()
 

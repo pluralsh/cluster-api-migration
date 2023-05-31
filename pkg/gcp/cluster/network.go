@@ -6,6 +6,7 @@ import (
 
 func (this *Cluster) Network() *api.GCPNetwork {
 	return &api.GCPNetwork{
+		Name:                  this.GetNetwork(),
 		AutoCreateSubnetworks: this.AutoCreateSubnetworks(),
 	}
 }
@@ -26,8 +27,7 @@ func (this *Cluster) Subnets() api.GCPSubnets {
 
 	return []api.GCPSubnet{
 		{
-			// TODO: use name
-			NameSuffix:          this.subnetwork.Name,
+			Name:                this.subnetwork.Name,
 			CidrBlock:           this.subnetwork.IpCidrRange,
 			Description:         this.subnetwork.Description,
 			SecondaryCidrBlocks: secondaryCidrBlocks,
