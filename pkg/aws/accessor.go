@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -33,14 +32,14 @@ type ClusterAccessor struct {
 	AddonProvider     *addon.Manager
 }
 
-func (this *ClusterAccessor) GetCluster() *api.Cluster {
+func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	addons, err := this.AddonProvider.GetAll(this.ctx)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
 	cfg.Region = this.configuration.Region
@@ -53,7 +52,7 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	regionName := "region-name"
 	az, err := svc.DescribeAvailabilityZones(this.ctx, &ec2.DescribeAvailabilityZonesInput{
@@ -62,7 +61,7 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	azLimit := len(az.AvailabilityZones)
 
@@ -72,10 +71,10 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if len(vpcs.Vpcs) != 1 {
-		log.Fatal(fmt.Errorf("couldn't find the VPC %s", *cluster.ResourcesVpcConfig.VpcId))
+		return nil, fmt.Errorf("couldn't find the VPC %s", *cluster.ResourcesVpcConfig.VpcId)
 	}
 	vpc := vpcs.Vpcs[0]
 	newCluster := &api.Cluster{
@@ -145,7 +144,7 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 			},
 		})
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		var rtID *string
 		if len(rt.RouteTables) > 0 {
@@ -158,7 +157,7 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 			},
 		})
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		var gtID *string
 		if len(gtw.NatGateways) > 0 {
@@ -178,13 +177,13 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 
 		newCluster.AWSCloudSpec.NetworkSpec.Subnets = append(newCluster.AWSCloudSpec.NetworkSpec.Subnets, sub)
 	}
-	return newCluster
+	return newCluster, nil
 }
 
-func (this *ClusterAccessor) GetWorkers() *api.Workers {
+func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	cfg.Region = this.configuration.Region
 	svc := ec2.NewFromConfig(cfg)
@@ -195,7 +194,7 @@ func (this *ClusterAccessor) GetWorkers() *api.Workers {
 		ClusterName: &this.configuration.ClusterName,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	workers := &api.Workers{
@@ -219,7 +218,7 @@ func (this *ClusterAccessor) GetWorkers() *api.Workers {
 			NodegroupName: ng,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		availabilityZones := []string{}
 		subnetID := "subnet-id"
@@ -230,7 +229,7 @@ func (this *ClusterAccessor) GetWorkers() *api.Workers {
 				},
 			})
 			if err != nil {
-				log.Fatal(err)
+				return nil, err
 			}
 			availabilityZones = append(availabilityZones, *subnets.Subnets[0].AvailabilityZone)
 		}
@@ -263,10 +262,10 @@ func (this *ClusterAccessor) GetWorkers() *api.Workers {
 			},
 		}
 	}
-	return workers
+	return workers, nil
 }
 
-func (this *ClusterAccessor) init() api.ClusterAccessor {
+func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	this.ctx = context.Background()
 	cmd := &cmdutils.Cmd{}
 	cfg := getCfg()
@@ -276,22 +275,22 @@ func (this *ClusterAccessor) init() api.ClusterAccessor {
 	cmd.ProviderConfig.WaitTimeout = time.Minute * 5
 	clusterProvider, err := cmd.NewProviderForExistingCluster(this.ctx)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	if ok, err := clusterProvider.CanOperate(cfg); !ok {
-		log.Fatal(err)
+		return nil, err
 	}
 	clientSet, err := clusterProvider.NewStdClientSet(cfg)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	this.NodeGroupProvider = nodegroup.New(cfg, clusterProvider, clientSet, selector.New(clusterProvider.AWSProvider.Session()))
 	stackManager := clusterProvider.NewStackManager(cmd.ClusterConfig)
 	this.AddonProvider, err = addon.New(cmd.ClusterConfig, clusterProvider.AWSProvider.EKS(), stackManager, *cmd.ClusterConfig.IAM.WithOIDC, nil, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	this.ClusterProvider = clusterProvider
-	return this
+	return this, nil
 }

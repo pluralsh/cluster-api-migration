@@ -2,7 +2,6 @@ package azure
 
 import (
 	"context"
-	"log"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
@@ -20,45 +19,45 @@ type ClusterAccessor struct {
 	agentPoolsClient      *armcontainerservice.AgentPoolsClient
 }
 
-func (this *ClusterAccessor) init() api.ClusterAccessor {
+func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatalf("authentication failure: %+v", err)
+		return nil, err
 	}
 
 	clientFactory, err := armresources.NewClientFactory(this.configuration.SubscriptionID, cred, nil)
 	if err != nil {
-		log.Fatalf("cannot create client factory: %+v", err)
+		return nil, err
 	}
 
 	this.resourceGroupClient = clientFactory.NewResourceGroupsClient()
 
 	csClientFactory, err := armcontainerservice.NewClientFactory(this.configuration.SubscriptionID, cred, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	this.managedClustersClient = csClientFactory.NewManagedClustersClient()
 	this.agentPoolsClient = csClientFactory.NewAgentPoolsClient()
 
-	return this
+	return this, nil
 }
 
-func (this *ClusterAccessor) GetCluster() *api.Cluster {
+func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	c, err := this.managedClustersClient.Get(this.ctx, this.configuration.ResourceGroup, this.configuration.Name, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	azureCluster := cluster.NewAzureCluster(this.configuration.SubscriptionID, this.configuration.ResourceGroup, &c.ManagedCluster)
 	return azureCluster.Convert()
 }
 
-func (this *ClusterAccessor) GetWorkers() *api.Workers {
+func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	return &api.Workers{
 		Defaults: api.DefaultsWorker{
 			AzureDefaultWorker: worker.AzureWorkerDefaults(),
 		},
 		WorkersSpec: api.WorkersSpec{},
-	}
+	}, nil
 }
