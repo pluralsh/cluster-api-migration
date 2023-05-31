@@ -15,6 +15,7 @@ func (this *Migrator) Convert() (*api.Values, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	w, err := this.accessor.GetWorkers()
 	if err != nil {
 		return nil, err
@@ -22,10 +23,9 @@ func (this *Migrator) Convert() (*api.Values, error) {
 
 	return &api.Values{
 		Provider: api.ClusterProviderGoogle,
-		// TODO: currently only managed is supported
-		Type:    api.ClusterTypeManaged,
-		Cluster: *c,
-		Workers: *w,
+		Type:     api.ClusterTypeManaged,
+		Cluster:  *c,
+		Workers:  *w,
 	}, nil
 }
 
@@ -34,10 +34,6 @@ func NewGCPMigrator(configuration *api.GCPConfiguration) (api.Migrator, error) {
 		configuration: configuration,
 		ctx:           context.Background(),
 	}).init()
-	if err != nil {
-		return nil, err
-	}
-	return &Migrator{
-		accessor: a,
-	}, nil
+
+	return &Migrator{accessor: a}, err
 }

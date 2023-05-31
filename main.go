@@ -59,9 +59,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	values, err := m.Convert()
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	resources.NewYAMLPrinter(values).PrettyPrint()
 }
