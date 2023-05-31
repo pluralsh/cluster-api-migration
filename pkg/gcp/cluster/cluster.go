@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"cloud.google.com/go/compute/apiv1/computepb"
 	"cloud.google.com/go/container/apiv1/containerpb"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
@@ -10,7 +11,9 @@ import (
 type Cluster struct {
 	*containerpb.Cluster
 
-	Project string
+	network     *computepb.Network
+	subnetworks *computepb.SubnetworkList
+	project     string
 }
 
 func (this *Cluster) AutopilotEnabled() bool {
@@ -22,8 +25,11 @@ func (this *Cluster) AutopilotEnabled() bool {
 }
 
 func (this *Cluster) WorkloadIdentityEnabled() bool {
-	// TODO: add logic
-	return true
+	if this.GetWorkloadIdentityConfig() == nil {
+		return false
+	}
+
+	return len(this.GetWorkloadIdentityConfig().GetWorkloadPool()) > 0
 }
 
 func (this *Cluster) ReleaseChannel() *api.GCPReleaseChannel {
@@ -56,7 +62,7 @@ func (this *Cluster) Convert() *api.Cluster {
 		KubernetesVersion: this.KubernetesVersion(),
 		CloudSpec: api.CloudSpec{
 			GCPCloudSpec: &api.GCPCloudSpec{
-				Project:                this.Project,
+				Project:                this.project,
 				Region:                 this.Location,
 				EnableAutopilot:        this.AutopilotEnabled(),
 				EnableWorkloadIdentity: this.WorkloadIdentityEnabled(),
@@ -70,7 +76,7 @@ func (this *Cluster) Convert() *api.Cluster {
 
 func NewGCPCluster(project string, cluster *containerpb.Cluster) *Cluster {
 	return &Cluster{
-		Project: project,
+		project: project,
 		Cluster: cluster,
 	}
 }

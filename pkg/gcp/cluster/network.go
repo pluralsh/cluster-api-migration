@@ -9,8 +9,11 @@ func (this *Cluster) Network() *api.GCPNetwork {
 }
 
 func (this *Cluster) AutoCreateSubnetworks() bool {
-	// TODO: Add logic
-	return true
+	if this.network == nil {
+		return false
+	}
+
+	return this.network.AutoCreateSubnetworks != nil && *this.network.AutoCreateSubnetworks
 }
 
 func (this *Cluster) Subnets() api.GCPSubnets {
