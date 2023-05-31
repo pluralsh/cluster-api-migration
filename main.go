@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	provider = api.ClusterProviderAWS
+	provider = api.ClusterProviderAzure
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {

@@ -10,9 +10,9 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
-func (this *Migrator) Convert() *api.Values {
-	c := this.accessor.GetCluster()
-	w := this.accessor.GetWorkers()
+func (migrator *Migrator) Convert() *api.Values {
+	c := migrator.accessor.GetCluster()
+	w := migrator.accessor.GetWorkers()
 
 	return &api.Values{
 		Provider: api.ClusterProviderAzure,

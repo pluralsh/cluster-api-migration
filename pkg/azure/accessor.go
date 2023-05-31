@@ -20,41 +20,41 @@ type ClusterAccessor struct {
 	agentPoolsClient      *armcontainerservice.AgentPoolsClient
 }
 
-func (this *ClusterAccessor) init() api.ClusterAccessor {
+func (accessor *ClusterAccessor) init() api.ClusterAccessor {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("authentication failure: %+v", err)
 	}
 
-	clientFactory, err := armresources.NewClientFactory(this.configuration.SubscriptionID, cred, nil)
+	clientFactory, err := armresources.NewClientFactory(accessor.configuration.SubscriptionID, cred, nil)
 	if err != nil {
 		log.Fatalf("cannot create client factory: %+v", err)
 	}
 
-	this.resourceGroupClient = clientFactory.NewResourceGroupsClient()
+	accessor.resourceGroupClient = clientFactory.NewResourceGroupsClient()
 
-	csClientFactory, err := armcontainerservice.NewClientFactory(this.configuration.SubscriptionID, cred, nil)
+	csClientFactory, err := armcontainerservice.NewClientFactory(accessor.configuration.SubscriptionID, cred, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	this.managedClustersClient = csClientFactory.NewManagedClustersClient()
-	this.agentPoolsClient = csClientFactory.NewAgentPoolsClient()
+	accessor.managedClustersClient = csClientFactory.NewManagedClustersClient()
+	accessor.agentPoolsClient = csClientFactory.NewAgentPoolsClient()
 
-	return this
+	return accessor
 }
 
-func (this *ClusterAccessor) GetCluster() *api.Cluster {
-	c, err := this.managedClustersClient.Get(this.ctx, this.configuration.ResourceGroup, this.configuration.Name, nil)
+func (accessor *ClusterAccessor) GetCluster() *api.Cluster {
+	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	azureCluster := cluster.NewAzureCluster(this.configuration.SubscriptionID, this.configuration.ResourceGroup, &c.ManagedCluster)
+	azureCluster := cluster.NewAzureCluster(accessor.configuration.SubscriptionID, accessor.configuration.ResourceGroup, &c.ManagedCluster)
 	return azureCluster.Convert()
 }
 
-func (this *ClusterAccessor) GetWorkers() *api.Workers {
+func (accessor *ClusterAccessor) GetWorkers() *api.Workers {
 	return &api.Workers{
 		Defaults: api.DefaultsWorker{
 			AzureDefaultWorker: worker.AzureWorkerDefaults(),

@@ -2,8 +2,11 @@ package cluster
 
 import "github.com/pluralsh/cluster-api-migration/pkg/api"
 
-func (this *Cluster) AutoscalerProfile() *api.AutoScalerProfile {
-	ap := this.Cluster.Properties.AutoScalerProfile
+func (cluster *Cluster) AutoscalerProfile() *api.AutoScalerProfile {
+	ap := cluster.Cluster.Properties.AutoScalerProfile
+	if ap == nil {
+		return nil
+	}
 
 	return &api.AutoScalerProfile{
 		BalanceSimilarNodeGroups:      ap.BalanceSimilarNodeGroups,
@@ -26,8 +29,11 @@ func (this *Cluster) AutoscalerProfile() *api.AutoScalerProfile {
 	}
 }
 
-func (this *Cluster) APIServerAccessProfile() *api.APIServerAccessProfile {
-	asap := this.Cluster.Properties.APIServerAccessProfile
+func (cluster *Cluster) APIServerAccessProfile() *api.APIServerAccessProfile {
+	asap := cluster.Cluster.Properties.APIServerAccessProfile
+	if asap == nil {
+		return nil
+	}
 
 	return &api.APIServerAccessProfile{
 		AuthorizedIPRanges:             asap.AuthorizedIPRanges,

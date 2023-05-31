@@ -11,11 +11,11 @@ type Cluster struct {
 	SubscriptionID string
 }
 
-func (this *Cluster) Convert() *api.Cluster {
+func (cluster *Cluster) Convert() *api.Cluster {
 	return &api.Cluster{
-		Name:              *this.Cluster.Name,
+		Name:              *cluster.Cluster.Name,
 		CIDRBlocks:        nil,
-		KubernetesVersion: *this.Cluster.Properties.KubernetesVersion,
+		KubernetesVersion: *cluster.Cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
 				// TODO: Change.
@@ -29,22 +29,22 @@ func (this *Cluster) Convert() *api.Cluster {
 				ClientSecretName:    "cluster-identity-secret",
 				ResourceID:          "",
 
-				TenantID:               *this.Cluster.Identity.TenantID,
-				SubscriptionID:         this.SubscriptionID,
-				Location:               *this.Cluster.Location,
-				ResourceGroupName:      this.ResourceGroup,
-				NodeResourceGroupName:  *this.Cluster.Properties.NodeResourceGroup,
-				VirtualNetwork:         this.VirtualNetwork(),
-				NetworkPlugin:          (*string)(this.Cluster.Properties.NetworkProfile.NetworkPlugin),
-				NetworkPolicy:          (*string)(this.Cluster.Properties.NetworkProfile.NetworkPolicy),
+				TenantID:               *cluster.Cluster.Identity.TenantID,
+				SubscriptionID:         cluster.SubscriptionID,
+				Location:               *cluster.Cluster.Location,
+				ResourceGroupName:      cluster.ResourceGroup,
+				NodeResourceGroupName:  *cluster.Cluster.Properties.NodeResourceGroup,
+				VirtualNetwork:         cluster.VirtualNetwork(),
+				NetworkPlugin:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPlugin),
+				NetworkPolicy:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPolicy),
 				OutboundType:           nil,
-				DNSServiceIP:           this.Cluster.Properties.NetworkProfile.DNSServiceIP,
+				DNSServiceIP:           cluster.Cluster.Properties.NetworkProfile.DNSServiceIP,
 				SSHPublicKey:           "",
 				SKU:                    nil,
-				LoadBalancerSKU:        (*string)(this.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
+				LoadBalancerSKU:        (*string)(cluster.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
 				LoadBalancerProfile:    nil,
-				APIServerAccessProfile: this.APIServerAccessProfile(),
-				AutoScalerProfile:      this.AutoscalerProfile(),
+				APIServerAccessProfile: cluster.APIServerAccessProfile(),
+				AutoScalerProfile:      cluster.AutoscalerProfile(),
 				AADProfile:             nil,
 				AddonProfiles:          nil,
 			},
