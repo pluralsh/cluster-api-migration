@@ -20,6 +20,7 @@ require (
 	k8s.io/client-go v0.26.0
 	sigs.k8s.io/cluster-api v1.3.5
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.2
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -223,7 +224,6 @@ require (
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
 // TODO: drop this pin after upgrading kubectl to 0.25

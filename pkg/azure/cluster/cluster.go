@@ -6,20 +6,16 @@ import (
 )
 
 type Cluster struct {
-	*armcontainerservice.ManagedCluster
-
-	ResourceGroup string
-}
-
-func (this *Cluster) KubernetesVersion() string {
-	return *this.Properties.KubernetesVersion
+	Cluster        *armcontainerservice.ManagedCluster
+	ResourceGroup  string
+	SubscriptionID string
 }
 
 func (this *Cluster) Convert() *api.Cluster {
 	return &api.Cluster{
-		Name:              *this.Name,
+		Name:              *this.Cluster.Name,
 		CIDRBlocks:        nil,
-		KubernetesVersion: this.KubernetesVersion(),
+		KubernetesVersion: *this.Cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
 				// TODO: Change.
@@ -27,23 +23,39 @@ func (this *Cluster) Convert() *api.Cluster {
 				// not the one they were using before.
 				ClusterIdentityType: "ServicePrincipal",
 				ClusterIdentityName: "cluster-identity",
+				AllowedNamespaces:   nil,
 				ClientID:            "", // provider.clientId,
 				ClientSecret:        "", // provider.clientSecret,
 				ClientSecretName:    "cluster-identity-secret",
-				TenantID:            *this.Identity.TenantID,
-				SubscriptionID:      "", // provider.subsctiptionId,
+				ResourceID:          "",
 
-				Location:          *this.Location,
-				ResourceGroupName: this.ResourceGroup,
-				SSHPublicKey:      "",
+				TenantID:               *this.Cluster.Identity.TenantID,
+				SubscriptionID:         this.SubscriptionID,
+				Location:               *this.Cluster.Location,
+				ResourceGroupName:      this.ResourceGroup,
+				NodeResourceGroupName:  *this.Cluster.Properties.NodeResourceGroup,
+				VirtualNetwork:         this.VirtualNetwork(),
+				NetworkPlugin:          (*string)(this.Cluster.Properties.NetworkProfile.NetworkPlugin),
+				NetworkPolicy:          (*string)(this.Cluster.Properties.NetworkProfile.NetworkPolicy),
+				OutboundType:           nil,
+				DNSServiceIP:           this.Cluster.Properties.NetworkProfile.DNSServiceIP,
+				SSHPublicKey:           "",
+				SKU:                    nil,
+				LoadBalancerSKU:        (*string)(this.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
+				LoadBalancerProfile:    nil,
+				APIServerAccessProfile: this.APIServerAccessProfile(),
+				AutoScalerProfile:      this.AutoscalerProfile(),
+				AADProfile:             nil,
+				AddonProfiles:          nil,
 			},
 		},
 	}
 }
 
-func NewAzureCluster(resourceGroup string, cluster *armcontainerservice.ManagedCluster) *Cluster {
+func NewAzureCluster(subscriptionId, resourceGroup string, cluster *armcontainerservice.ManagedCluster) *Cluster {
 	return &Cluster{
-		ManagedCluster: cluster,
+		Cluster:        cluster,
 		ResourceGroup:  resourceGroup,
+		SubscriptionID: subscriptionId,
 	}
 }
