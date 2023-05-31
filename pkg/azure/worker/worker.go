@@ -36,6 +36,7 @@ func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgen
 				MinSize: *agentPool.MinCount,
 				MaxSize: *agentPool.MaxCount,
 			},
+			Taints:               nil, // TODO:
 			MaxPods:              agentPool.MaxPods,
 			OsDiskType:           (*string)(agentPool.OSDiskType),
 			OSType:               (*string)(agentPool.OSType),
