@@ -14,7 +14,7 @@ type printer struct {
 }
 
 func (this *printer) PrettyPrint() {
-	s, _ := json.MarshalIndent(this.i, "", "\t")
+	s, _ := json.MarshalIndent(this.i, "", "  ")
 
 	fmt.Println(string(s))
 }

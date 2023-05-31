@@ -110,15 +110,15 @@ type AzureCloudSpec struct {
 type AzureWorkers map[string]AzureWorker
 
 type AzureWorker struct {
-	Replicas    int                `json:"replicas"`
-	Labels      map[string]*string `json:"labels,omitempty"`
-	Annotations map[string]string  `json:"annotations,omitempty"`
-	Spec        AzureWorkerSpec    `json:"spec"`
+	Replicas    int               `json:"replicas"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Spec        AzureWorkerSpec   `json:"spec"`
 }
 
 type AzureWorkerSpec struct {
 	AdditionalTags       Tags                       `json:"additionalTags,omitempty"`
-	Mode                 string                     `json:"mode"`
+	Mode                 NodePoolMode               `json:"mode"`
 	SKU                  string                     `json:"sku"`
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
 	AvailabilityZones    []string                   `json:"availabilityZones,omitempty"`
@@ -130,10 +130,17 @@ type AzureWorkerSpec struct {
 	OSType               *string                    `json:"osType,omitempty"`
 	EnableNodePublicIP   *bool                      `json:"enableNodePublicIP,omitempty"`
 	NodePublicIPPrefixID *string                    `json:"nodePublicIPPrefixID,omitempty"`
-	KubeletDiskType      *KubeletDiskType           `json:"kubeletDiskType,omitempty"`
+	KubeletConfig        *KubeletConfig             `json:"kubeletConfig,omitempty"`
 	LinuxOSConfig        *LinuxOSConfig             `json:"linuxOSConfig,omitempty"`
 	ScaleSetPriority     *string                    `json:"scaleSetPriority,omitempty"`
 }
+
+type NodePoolMode string
+
+const (
+	NodePoolModeSystem NodePoolMode = "System"
+	NodePoolModeUser   NodePoolMode = "User"
+)
 
 type AllowedNamespaces struct {
 	NamespaceList []string              `json:"list"`
@@ -280,12 +287,28 @@ type Tags map[string]string
 
 type IdentityType string
 
-type KubeletDiskType string
+type KubeletConfig struct {
+	CPUManagerPolicy      *CPUManagerPolicy      `json:"cpuManagerPolicy,omitempty"`
+	CPUCfsQuota           *bool                  `json:"cpuCfsQuota,omitempty"`
+	CPUCfsQuotaPeriod     *string                `json:"cpuCfsQuotaPeriod,omitempty"`
+	ImageGcHighThreshold  *int32                 `json:"imageGcHighThreshold,omitempty"`
+	ImageGcLowThreshold   *int32                 `json:"imageGcLowThreshold,omitempty"`
+	TopologyManagerPolicy *TopologyManagerPolicy `json:"topologyManagerPolicy,omitempty"`
+	AllowedUnsafeSysctls  []string               `json:"allowedUnsafeSysctls,omitempty"`
+	FailSwapOn            *bool                  `json:"failSwapOn,omitempty"`
+	ContainerLogMaxSizeMB *int32                 `json:"containerLogMaxSizeMB,omitempty"`
+	ContainerLogMaxFiles  *int32                 `json:"containerLogMaxFiles,omitempty"`
+	PodMaxPids            *int32                 `json:"podMaxPids,omitempty"`
+}
+
+type CPUManagerPolicy string
 
 const (
-	KubeletDiskTypeOS        KubeletDiskType = "OS"
-	KubeletDiskTypeTemporary KubeletDiskType = "Temporary"
+	CPUManagerPolicyNone   CPUManagerPolicy = "none"
+	CPUManagerPolicyStatic CPUManagerPolicy = "static"
 )
+
+type TopologyManagerPolicy string
 
 type LinuxOSConfig struct {
 	SwapFileSizeMB             *int32                     `json:"swapFileSizeMB,omitempty"`
