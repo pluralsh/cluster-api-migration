@@ -2,13 +2,12 @@ package main
 
 import (
 	"encoding/base64"
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/migrator"
-	"sigs.k8s.io/yaml"
+	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 const (
@@ -18,15 +17,14 @@ const (
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	switch provider {
 	case api.ClusterProviderGoogle:
-		project, region, name := "pluralsh-test-384515", "europe-central2", "gcp-capi"
 		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv(api.GCPEncodedCredentialsEnvVar))
 
 		return &api.Configuration{
 			GCPConfiguration: &api.GCPConfiguration{
 				Credentials: string(credentials),
-				Project:     project,
-				Region:      region,
-				Name:        name,
+				Project:     "pluralsh-test-384515",
+				Region:      "europe-central2",
+				Name:        "gcp-capi",
 			},
 		}
 	case api.ClusterProviderAzure:
@@ -57,10 +55,13 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 }
 
 func main() {
-	m := migrator.NewMigrator(provider, newConfiguration(provider))
-	res, err := yaml.Marshal(m.Convert())
+	m, err := migrator.NewMigrator(provider, newConfiguration(provider))
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(res))
+	values, err := m.Convert()
+	if err != nil {
+		log.Fatal(err)
+	}
+	resources.NewYAMLPrinter(values).PrettyPrint()
 }

@@ -10,24 +10,34 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
-func (this *Migrator) Convert() *api.Values {
-	c := this.accessor.GetCluster()
-	w := this.accessor.GetWorkers()
+func (this *Migrator) Convert() (*api.Values, error) {
+	c, err := this.accessor.GetCluster()
+	if err != nil {
+		return nil, err
+	}
+	w, err := this.accessor.GetWorkers()
+	if err != nil {
+		return nil, err
+	}
 
 	return &api.Values{
 		Provider: api.ClusterProviderGoogle,
 		// TODO: currently only managed is supported
-		Type:    "managed",
+		Type:    api.ClusterTypeManaged,
 		Cluster: *c,
 		Workers: *w,
-	}
+	}, nil
 }
 
-func NewGCPMigrator(configuration *api.GCPConfiguration) api.Migrator {
-	return &Migrator{
-		accessor: (&ClusterAccessor{
-			configuration: configuration,
-			ctx:           context.Background(),
-		}).init(),
+func NewGCPMigrator(configuration *api.GCPConfiguration) (api.Migrator, error) {
+	a, err := (&ClusterAccessor{
+		configuration: configuration,
+		ctx:           context.Background(),
+	}).init()
+	if err != nil {
+		return nil, err
 	}
+	return &Migrator{
+		accessor: a,
+	}, nil
 }

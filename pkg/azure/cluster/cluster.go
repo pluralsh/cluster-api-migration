@@ -11,7 +11,7 @@ type Cluster struct {
 	SubscriptionID string
 }
 
-func (cluster *Cluster) Convert() *api.Cluster {
+func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	return &api.Cluster{
 		Name:              *cluster.Cluster.Name,
 		CIDRBlocks:        nil,
@@ -49,7 +49,7 @@ func (cluster *Cluster) Convert() *api.Cluster {
 				AddonProfiles:          nil,
 			},
 		},
-	}
+	}, nil
 }
 
 func NewAzureCluster(subscriptionId, resourceGroup string, cluster *armcontainerservice.ManagedCluster) *Cluster {

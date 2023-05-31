@@ -52,10 +52,10 @@ type GCPConfiguration struct {
 }
 
 type Migrator interface {
-	Convert() *Values
+	Convert() (*Values, error)
 }
 
 type ClusterAccessor interface {
-	GetCluster() *Cluster
-	GetWorkers() *Workers
+	GetCluster() (*Cluster, error)
+	GetWorkers() (*Workers, error)
 }

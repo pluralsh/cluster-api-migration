@@ -4,18 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"cloud.google.com/go/container/apiv1"
 	"cloud.google.com/go/container/apiv1/containerpb"
-	"github.com/pluralsh/polly/algorithms"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 	"k8s.io/client-go/pkg/version"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/gcp/cluster"
-	"github.com/pluralsh/cluster-api-migration/pkg/resources"
+	"github.com/pluralsh/cluster-api-migration/pkg/gcp/worker"
 )
 
 type ClusterAccessor struct {
@@ -25,11 +23,11 @@ type ClusterAccessor struct {
 	computeClient *compute.Service
 }
 
-func (this *ClusterAccessor) init() api.ClusterAccessor {
+func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	this.initContainerClientOrDie()
 	this.initComputeClientOrDie()
 
-	return this
+	return this, nil
 }
 
 func (this *ClusterAccessor) initContainerClientOrDie() {
@@ -73,19 +71,6 @@ func (this *ClusterAccessor) clusterName(project, region, name string) string {
 	)
 }
 
-func (this *ClusterAccessor) GetCluster() *api.Cluster {
-	c := this.getClusterOrDie()
-	network := this.getNetworkOrDie(c.Network)
-	subnetworkList := this.getSubnetworkListOrDie(network.Subnetworks)
-
-	resources.NewPrinter(c).PrettyPrint()
-	resources.NewPrinter(network).PrettyPrint()
-	resources.NewPrinter(subnetworkList).PrettyPrint()
-
-	gcpCluster := cluster.NewGCPCluster(this.configuration.Project, c)
-	return gcpCluster.Convert()
-}
-
 func (this *ClusterAccessor) getClusterOrDie() *containerpb.Cluster {
 	cluster, err := this.clusterClient.GetCluster(this.ctx, &containerpb.GetClusterRequest{
 		Name: this.clusterName(this.configuration.Project, this.configuration.Region, this.configuration.Name),
@@ -109,27 +94,29 @@ func (this *ClusterAccessor) getNetworkOrDie(name string) *compute.Network {
 	return network
 }
 
-func (this *ClusterAccessor) getSubnetworkListOrDie(names []string) *compute.SubnetworkList {
-	subnetworks := new(compute.SubnetworkList)
-	req := this.computeClient.Subnetworks.List(this.configuration.Project, this.configuration.Region)
+func (this *ClusterAccessor) getSubnetworkOrDie(name string) *compute.Subnetwork {
+	req := this.computeClient.Subnetworks.Get(this.configuration.Project, this.configuration.Region, name)
+	subnetwork, err := req.Do()
 
-	if err := req.
-		Filter(strings.Join(algorithms.Map(names, func(name string) string {
-			return fmt.Sprintf("name=%s", name)
-		}), ",")).
-		Pages(this.ctx, func(page *compute.SubnetworkList) error {
-			subnetworks = page
-			return nil
-		}); err != nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	return subnetworks
+	return subnetwork
 }
 
-func (this *ClusterAccessor) GetWorkers() *api.Workers {
-	return &api.Workers{
-		Defaults:    api.DefaultsWorker{},
-		WorkersSpec: api.WorkersSpec{},
-	}
+func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
+	c := this.getClusterOrDie()
+	network := this.getNetworkOrDie(c.Network)
+	subnetwork := this.getSubnetworkOrDie(c.Subnetwork)
+	gcpCluster := cluster.NewGCPCluster(this.configuration.Project, c, network, subnetwork)
+
+	return gcpCluster.Convert(), nil
+}
+
+func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
+	cluster := this.getClusterOrDie()
+	workers := worker.NewGCPWorkers(cluster)
+
+	return workers.Convert(), nil
 }
