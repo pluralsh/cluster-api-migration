@@ -67,7 +67,7 @@ type AzureCloudSpec struct {
 	// Outbound configuration used by Nodes.
 	// +kubebuilder:validation:Enum=loadBalancer;managedNATGateway;userAssignedNATGateway;userDefinedRouting
 	// +optional
-	OutboundType *ManagedControlPlaneOutboundType `json:"outboundType,omitempty"`
+	OutboundType *string `json:"outboundType,omitempty"`
 
 	// DNSServiceIP is an IP address assigned to the Kubernetes DNS service.
 	// It must be within the Kubernetes service address range specified in serviceCidr.
@@ -118,11 +118,11 @@ type AzureWorker struct {
 
 type AzureWorkerSpec struct {
 	AdditionalTags       Tags                       `json:"additionalTags,omitempty"`
-	Mode                 NodePoolMode               `json:"mode"`
+	Mode                 string                     `json:"mode"`
 	SKU                  string                     `json:"sku"`
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
-	AvailabilityZones    []string                   `json:"availabilityZones,omitempty"`
-	NodeLabels           map[string]string          `json:"nodeLabels,omitempty"`
+	AvailabilityZones    []*string                  `json:"availabilityZones,omitempty"`
+	NodeLabels           map[string]*string         `json:"nodeLabels,omitempty"`
 	Taints               Taints                     `json:"taints,omitempty"`
 	Scaling              *ManagedMachinePoolScaling `json:"scaling,omitempty"`
 	MaxPods              *int32                     `json:"maxPods,omitempty"`
@@ -134,13 +134,6 @@ type AzureWorkerSpec struct {
 	LinuxOSConfig        *LinuxOSConfig             `json:"linuxOSConfig,omitempty"`
 	ScaleSetPriority     *string                    `json:"scaleSetPriority,omitempty"`
 }
-
-type NodePoolMode string
-
-const (
-	NodePoolModeSystem NodePoolMode = "System"
-	NodePoolModeUser   NodePoolMode = "User"
-)
 
 type AllowedNamespaces struct {
 	NamespaceList []string              `json:"list"`
@@ -186,15 +179,6 @@ type PrivateLinkServiceConnection struct {
 	GroupIDs             []string `json:"groupIDs,omitempty"`
 	RequestMessage       string   `json:"requestMessage,omitempty"`
 }
-
-type ManagedControlPlaneOutboundType string
-
-const (
-	ManagedControlPlaneOutboundTypeLoadBalancer           ManagedControlPlaneOutboundType = "loadBalancer"
-	ManagedControlPlaneOutboundTypeManagedNATGateway      ManagedControlPlaneOutboundType = "managedNATGateway"
-	ManagedControlPlaneOutboundTypeUserAssignedNATGateway ManagedControlPlaneOutboundType = "userAssignedNATGateway"
-	ManagedControlPlaneOutboundTypeUserDefinedRouting     ManagedControlPlaneOutboundType = "userDefinedRouting"
-)
 
 type AADProfile struct {
 	Managed             bool     `json:"managed"`

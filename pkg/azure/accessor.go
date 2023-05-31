@@ -53,11 +53,13 @@ func (accessor *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	return azureCluster.Convert()
 }
 
+// TODO: Avoid connecting Azure API twice.
 func (accessor *ClusterAccessor) GetWorkers() (*api.Workers, error) {
-	return &api.Workers{
-		Defaults: api.DefaultsWorker{
-			AzureDefaultWorker: worker.AzureWorkerDefaults(),
-		},
-		WorkersSpec: api.WorkersSpec{},
-	}, nil
+	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	azureWorkers := worker.NewAzureWorkers(accessor.configuration.SubscriptionID, accessor.configuration.ResourceGroup, &c.ManagedCluster)
+	return azureWorkers.Convert()
 }

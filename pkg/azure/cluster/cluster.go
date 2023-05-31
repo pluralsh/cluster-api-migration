@@ -37,7 +37,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				VirtualNetwork:         cluster.VirtualNetwork(),
 				NetworkPlugin:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPlugin),
 				NetworkPolicy:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPolicy),
-				OutboundType:           nil,
+				OutboundType:           (*string)(cluster.Cluster.Properties.NetworkProfile.OutboundType),
 				DNSServiceIP:           cluster.Cluster.Properties.NetworkProfile.DNSServiceIP,
 				SSHPublicKey:           "",
 				SKU:                    nil,
