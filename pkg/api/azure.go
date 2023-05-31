@@ -208,54 +208,24 @@ type AddonProfile struct {
 }
 
 type AutoScalerProfile struct {
-	BalanceSimilarNodeGroups      *BalanceSimilarNodeGroups  `json:"balanceSimilarNodeGroups,omitempty"`
-	Expander                      *Expander                  `json:"expander,omitempty"`
-	MaxEmptyBulkDelete            *string                    `json:"maxEmptyBulkDelete,omitempty"`
-	MaxGracefulTerminationSec     *string                    `json:"maxGracefulTerminationSec,omitempty"`
-	MaxNodeProvisionTime          *string                    `json:"maxNodeProvisionTime,omitempty"`
-	MaxTotalUnreadyPercentage     *string                    `json:"maxTotalUnreadyPercentage,omitempty"`
-	NewPodScaleUpDelay            *string                    `json:"newPodScaleUpDelay,omitempty"`
-	OkTotalUnreadyCount           *string                    `json:"okTotalUnreadyCount,omitempty"`
-	ScanInterval                  *string                    `json:"scanInterval,omitempty"`
-	ScaleDownDelayAfterAdd        *string                    `json:"scaleDownDelayAfterAdd,omitempty"`
-	ScaleDownDelayAfterDelete     *string                    `json:"scaleDownDelayAfterDelete,omitempty"`
-	ScaleDownDelayAfterFailure    *string                    `json:"scaleDownDelayAfterFailure,omitempty"`
-	ScaleDownUnneededTime         *string                    `json:"scaleDownUnneededTime,omitempty"`
-	ScaleDownUnreadyTime          *string                    `json:"scaleDownUnreadyTime,omitempty"`
-	ScaleDownUtilizationThreshold *string                    `json:"scaleDownUtilizationThreshold,omitempty"`
-	SkipNodesWithLocalStorage     *SkipNodesWithLocalStorage `json:"skipNodesWithLocalStorage,omitempty"`
-	SkipNodesWithSystemPods       *SkipNodesWithSystemPods   `json:"skipNodesWithSystemPods,omitempty"`
+	BalanceSimilarNodeGroups      *string `json:"balanceSimilarNodeGroups,omitempty"`
+	Expander                      *string `json:"expander,omitempty"`
+	MaxEmptyBulkDelete            *string `json:"maxEmptyBulkDelete,omitempty"`
+	MaxGracefulTerminationSec     *string `json:"maxGracefulTerminationSec,omitempty"`
+	MaxNodeProvisionTime          *string `json:"maxNodeProvisionTime,omitempty"`
+	MaxTotalUnreadyPercentage     *string `json:"maxTotalUnreadyPercentage,omitempty"`
+	NewPodScaleUpDelay            *string `json:"newPodScaleUpDelay,omitempty"`
+	OkTotalUnreadyCount           *string `json:"okTotalUnreadyCount,omitempty"`
+	ScanInterval                  *string `json:"scanInterval,omitempty"`
+	ScaleDownDelayAfterAdd        *string `json:"scaleDownDelayAfterAdd,omitempty"`
+	ScaleDownDelayAfterDelete     *string `json:"scaleDownDelayAfterDelete,omitempty"`
+	ScaleDownDelayAfterFailure    *string `json:"scaleDownDelayAfterFailure,omitempty"`
+	ScaleDownUnneededTime         *string `json:"scaleDownUnneededTime,omitempty"`
+	ScaleDownUnreadyTime          *string `json:"scaleDownUnreadyTime,omitempty"`
+	ScaleDownUtilizationThreshold *string `json:"scaleDownUtilizationThreshold,omitempty"`
+	SkipNodesWithLocalStorage     *string `json:"skipNodesWithLocalStorage,omitempty"`
+	SkipNodesWithSystemPods       *string `json:"skipNodesWithSystemPods,omitempty"`
 }
-
-type BalanceSimilarNodeGroups string
-
-const (
-	BalanceSimilarNodeGroupsTrue  BalanceSimilarNodeGroups = "true"
-	BalanceSimilarNodeGroupsFalse BalanceSimilarNodeGroups = "false"
-)
-
-type Expander string
-
-const (
-	ExpanderLeastWaste Expander = "least-waste"
-	ExpanderMostPods   Expander = "most-pods"
-	ExpanderPriority   Expander = "priority"
-	ExpanderRandom     Expander = "random"
-)
-
-type SkipNodesWithLocalStorage string
-
-const (
-	SkipNodesWithLocalStorageTrue  SkipNodesWithLocalStorage = "true"
-	SkipNodesWithLocalStorageFalse SkipNodesWithLocalStorage = "false"
-)
-
-type SkipNodesWithSystemPods string
-
-const (
-	SkipNodesWithSystemPodsTrue  SkipNodesWithSystemPods = "true"
-	SkipNodesWithSystemPodsFalse SkipNodesWithSystemPods = "false"
-)
 
 type AzureManagedControlPlaneSkuTier string
 
@@ -277,10 +247,10 @@ type LoadBalancerProfile struct {
 }
 
 type APIServerAccessProfile struct {
-	AuthorizedIPRanges             []string `json:"authorizedIPRanges,omitempty"`
-	EnablePrivateCluster           *bool    `json:"enablePrivateCluster,omitempty"`
-	PrivateDNSZone                 *string  `json:"privateDNSZone,omitempty"`
-	EnablePrivateClusterPublicFQDN *bool    `json:"enablePrivateClusterPublicFQDN,omitempty"`
+	AuthorizedIPRanges             []*string `json:"authorizedIPRanges,omitempty"`
+	EnablePrivateCluster           *bool     `json:"enablePrivateCluster,omitempty"`
+	PrivateDNSZone                 *string   `json:"privateDNSZone,omitempty"`
+	EnablePrivateClusterPublicFQDN *bool     `json:"enablePrivateClusterPublicFQDN,omitempty"`
 }
 
 type Tags map[string]string

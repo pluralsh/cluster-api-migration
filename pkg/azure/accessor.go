@@ -50,7 +50,7 @@ func (this *ClusterAccessor) GetCluster() *api.Cluster {
 		log.Fatal(err)
 	}
 
-	azureCluster := cluster.NewAzureCluster(this.configuration.ResourceGroup, &c.ManagedCluster)
+	azureCluster := cluster.NewAzureCluster(this.configuration.SubscriptionID, this.configuration.ResourceGroup, &c.ManagedCluster)
 	return azureCluster.Convert()
 }
 

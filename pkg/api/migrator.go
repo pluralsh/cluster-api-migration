@@ -21,21 +21,21 @@ type AWSConfiguration struct {
 }
 
 type AzureConfiguration struct {
-	SubscriptionID string
+	SubscriptionID string // TODO: Figure out best way to pass it.
 	ResourceGroup  string
 	Name           string
 }
 
-func (this *AzureConfiguration) Validate() error {
-	if len(this.SubscriptionID) == 0 {
+func (config *AzureConfiguration) Validate() error {
+	if len(config.SubscriptionID) == 0 {
 		return fmt.Errorf("subscription ID cannot be empty, ensure that %s evironment variable is set", AzureSubscriptionIdEnvVar)
 	}
 
-	if len(this.ResourceGroup) == 0 {
+	if len(config.ResourceGroup) == 0 {
 		return fmt.Errorf("resource group cannot be empty, ensure that it is set")
 	}
 
-	if len(this.Name) == 0 {
+	if len(config.Name) == 0 {
 		return fmt.Errorf("name cannot be empty, ensure that it is set")
 	}
 
