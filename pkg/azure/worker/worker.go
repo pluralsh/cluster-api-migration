@@ -23,7 +23,9 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	return &result
 }
 
-func mapTaintEffect(azureTaintEffect string) api.TaintEffect {
+// TaintEffect maps taint effects from Azure (camelCase, i.e. NoSchedule)
+// to form used in CAPI (kebab-case, i.e. no-schedule).
+func TaintEffect(azureTaintEffect string) api.TaintEffect {
 	switch azureTaintEffect {
 	case "NoSchedule":
 		return api.TaintEffectNoSchedule
@@ -36,7 +38,29 @@ func mapTaintEffect(azureTaintEffect string) api.TaintEffect {
 	}
 }
 
-func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
+// Taints returns Azure worker taints mapped from key=value:NoSchedule
+// form to taint objects used in CAPI.
+func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.Taints {
+	taints := api.Taints{}
+
+	for _, taint := range agentPool.NodeTaints {
+		effectSplit := strings.Split(*taint, ":")
+		if len(effectSplit) >= 2 {
+			keyValueSplit := strings.Split(effectSplit[0], "=")
+			if len(keyValueSplit) >= 2 {
+				taints = append(taints, api.Taint{
+					Effect: TaintEffect(effectSplit[1]),
+					Key:    keyValueSplit[0],
+					Value:  keyValueSplit[1],
+				})
+			}
+		}
+	}
+
+	return taints
+}
+
+func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
 	worker := api.AzureWorker{
 		Replicas:    int(*agentPool.Count),
 		Annotations: map[string]string{}, // TODO: Fill it.
@@ -47,6 +71,7 @@ func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgen
 			OSDiskSizeGB:      agentPool.OSDiskSizeGB,
 			AvailabilityZones: agentPool.AvailabilityZones,
 			NodeLabels:        agentPool.NodeLabels,
+			Taints:            Taints(agentPool),
 			Scaling: &api.ManagedMachinePoolScaling{
 				MinSize: *agentPool.MinCount,
 				MaxSize: *agentPool.MaxCount,
@@ -58,21 +83,6 @@ func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgen
 			NodePublicIPPrefixID: agentPool.NodePublicIPPrefixID,
 			ScaleSetPriority:     (*string)(agentPool.ScaleSetPriority),
 		},
-	}
-
-	// Form: key=value:NoSchedule
-	for _, taint := range agentPool.NodeTaints {
-		effectSplit := strings.Split(*taint, ":")
-		if len(effectSplit) >= 2 {
-			keyValueSplit := strings.Split(effectSplit[0], "=")
-			if len(keyValueSplit) >= 2 {
-				worker.Spec.Taints = append(worker.Spec.Taints, api.Taint{
-					Effect: mapTaintEffect(effectSplit[1]),
-					Key:    keyValueSplit[0],
-					Value:  keyValueSplit[1],
-				})
-			}
-		}
 	}
 
 	return worker
