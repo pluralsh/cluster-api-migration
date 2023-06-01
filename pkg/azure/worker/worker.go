@@ -17,7 +17,7 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	result := api.AzureWorkers{}
 
 	for _, agentPool := range workers.Cluster.Properties.AgentPoolProfiles {
-		result[*agentPool.Name] = workers.Worker(agentPool)
+		result[*agentPool.Name] = Worker(agentPool)
 	}
 
 	return &result
