@@ -28,7 +28,8 @@ type ClusterAPI struct {
 
 type Cluster struct {
 	Name              string   `json:"name"`
-	CIDRBlocks        []string `json:"podCidrBlocks"`
+	PodCIDRBlocks     []string `json:"podCidrBlocks"`
+	ServiceCIDRBlocks []string `json:"serviceCidrBlocks"`
 	KubernetesVersion string   `json:"kubernetesVersion"`
 	CloudSpec         `json:",inline"`
 }

@@ -2,19 +2,30 @@ package cluster
 
 import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
 type Cluster struct {
 	Cluster        *armcontainerservice.ManagedCluster
+	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
+}
+
+func (cluster *Cluster) SKU() *api.AKSSku {
+	if cluster.Cluster.SKU == nil {
+		return nil
+	}
+
+	return &api.AKSSku{Tier: (*string)(cluster.Cluster.SKU.Tier)}
 }
 
 func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	return &api.Cluster{
 		Name:              *cluster.Cluster.Name,
-		CIDRBlocks:        nil,
+		PodCIDRBlocks:     cluster.PodCIDRBlocks(),
+		ServiceCIDRBlocks: cluster.ServiceCIDRBlocks(),
 		KubernetesVersion: *cluster.Cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
@@ -40,7 +51,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				OutboundType:           (*string)(cluster.Cluster.Properties.NetworkProfile.OutboundType),
 				DNSServiceIP:           cluster.Cluster.Properties.NetworkProfile.DNSServiceIP,
 				SSHPublicKey:           "",
-				SKU:                    nil,
+				SKU:                    cluster.SKU(),
 				LoadBalancerSKU:        (*string)(cluster.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
 				LoadBalancerProfile:    nil,
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
@@ -52,9 +63,10 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup string, cluster *armcontainerservice.ManagedCluster) *Cluster {
+func NewAzureCluster(subscriptionId, resourceGroup string, cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
+		VNet:           vnet,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
 	}

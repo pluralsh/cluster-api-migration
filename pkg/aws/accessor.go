@@ -79,7 +79,7 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	vpc := vpcs.Vpcs[0]
 	newCluster := &api.Cluster{
 		Name:              this.configuration.ClusterName,
-		CIDRBlocks:        []string{*vpc.CidrBlock},
+		PodCIDRBlocks:     []string{*vpc.CidrBlock},
 		KubernetesVersion: fmt.Sprintf("v%s", *cluster.Version),
 		CloudSpec: api.CloudSpec{
 			AWSCloudSpec: &api.AWSCloudSpec{

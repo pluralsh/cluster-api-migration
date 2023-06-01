@@ -211,15 +211,8 @@ type AutoScalerProfile struct {
 	SkipNodesWithSystemPods       *string `json:"skipNodesWithSystemPods,omitempty"`
 }
 
-type AzureManagedControlPlaneSkuTier string
-
-const (
-	FreeManagedControlPlaneTier AzureManagedControlPlaneSkuTier = "Free"
-	PaidManagedControlPlaneTier AzureManagedControlPlaneSkuTier = "Paid"
-)
-
 type AKSSku struct {
-	Tier AzureManagedControlPlaneSkuTier `json:"tier"`
+	Tier *string `json:"tier"`
 }
 
 type LoadBalancerProfile struct {
