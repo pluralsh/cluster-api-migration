@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"strings"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
@@ -21,12 +23,25 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	return &result
 }
 
+func mapTaintEffect(azureTaintEffect string) api.TaintEffect {
+	switch azureTaintEffect {
+	case "NoSchedule":
+		return api.TaintEffectNoSchedule
+	case "NoExecute":
+		return api.TaintEffectNoExecute
+	case "PreferNoSchedule":
+		return api.TaintEffectPreferNoSchedule
+	default:
+		return ""
+	}
+}
+
 func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
 	worker := api.AzureWorker{
 		Replicas:    int(*agentPool.Count),
-		Annotations: map[string]string{}, // TODO:
+		Annotations: map[string]string{}, // TODO: Fill it.
 		Spec: api.AzureWorkerSpec{
-			AdditionalTags:    nil, // TODO:
+			AdditionalTags:    nil, // TODO: Fill it.
 			Mode:              string(*agentPool.Mode),
 			SKU:               *agentPool.VMSize,
 			OSDiskSizeGB:      agentPool.OSDiskSizeGB,
@@ -36,7 +51,6 @@ func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgen
 				MinSize: *agentPool.MinCount,
 				MaxSize: *agentPool.MaxCount,
 			},
-			Taints:               nil, // TODO:
 			MaxPods:              agentPool.MaxPods,
 			OsDiskType:           (*string)(agentPool.OSDiskType),
 			OSType:               (*string)(agentPool.OSType),
@@ -44,6 +58,21 @@ func (workers *Workers) Worker(agentPool *armcontainerservice.ManagedClusterAgen
 			NodePublicIPPrefixID: agentPool.NodePublicIPPrefixID,
 			ScaleSetPriority:     (*string)(agentPool.ScaleSetPriority),
 		},
+	}
+
+	// Form: key=value:NoSchedule
+	for _, taint := range agentPool.NodeTaints {
+		effectSplit := strings.Split(*taint, ":")
+		if len(effectSplit) >= 2 {
+			keyValueSplit := strings.Split(effectSplit[0], "=")
+			if len(keyValueSplit) >= 2 {
+				worker.Spec.Taints = append(worker.Spec.Taints, api.Taint{
+					Effect: mapTaintEffect(effectSplit[1]),
+					Key:    keyValueSplit[0],
+					Value:  keyValueSplit[1],
+				})
+			}
+		}
 	}
 
 	return worker
