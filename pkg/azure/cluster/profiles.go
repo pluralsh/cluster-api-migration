@@ -42,3 +42,36 @@ func (cluster *Cluster) APIServerAccessProfile() *api.APIServerAccessProfile {
 		EnablePrivateClusterPublicFQDN: asap.EnablePrivateClusterPublicFQDN,
 	}
 }
+
+func (cluster *Cluster) LoadBalancerProfileOutboundIPPrefixes() []string {
+	prefixes := []string{}
+	for _, prefix := range cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile.OutboundIPPrefixes.PublicIPPrefixes {
+		prefixes = append(prefixes, *prefix.ID)
+	}
+
+	return prefixes
+}
+
+func (cluster *Cluster) LoadBalancerProfileOutboundIPs() []string {
+	ips := []string{}
+	for _, ip := range cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile.OutboundIPs.PublicIPs {
+		ips = append(ips, *ip.ID)
+	}
+
+	return ips
+}
+
+func (cluster *Cluster) LoadBalancerProfile() *api.LoadBalancerProfile {
+	lbp := cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile
+	if lbp == nil {
+		return nil
+	}
+
+	return &api.LoadBalancerProfile{
+		ManagedOutboundIPs:     lbp.ManagedOutboundIPs.Count,
+		OutboundIPPrefixes:     cluster.LoadBalancerProfileOutboundIPPrefixes(),
+		OutboundIPs:            cluster.LoadBalancerProfileOutboundIPs(),
+		AllocatedOutboundPorts: lbp.AllocatedOutboundPorts,
+		IdleTimeoutInMinutes:   lbp.IdleTimeoutInMinutes,
+	}
+}

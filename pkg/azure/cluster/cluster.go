@@ -49,7 +49,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				SSHPublicKey:           "",
 				SKU:                    cluster.SKU(),
 				LoadBalancerSKU:        (*string)(cluster.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
-				LoadBalancerProfile:    nil,
+				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
 				AADProfile:             nil,
