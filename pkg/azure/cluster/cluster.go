@@ -11,6 +11,8 @@ type Cluster struct {
 	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
+	ClientID       string
+	ResourceID     string
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
@@ -29,18 +31,12 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		KubernetesVersion: *cluster.Cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
-				// TODO: Change.
-				// Exported clusters will use service principal auth method,
-				// not the one they were using before.
-				ClusterIdentityType: "ServicePrincipal",
-				ClusterIdentityName: "cluster-identity",
-				AllowedNamespaces:   nil,
-				ClientID:            "", // provider.clientId,
-				ClientSecret:        "", // provider.clientSecret,
-				ClientSecretName:    "cluster-identity-secret",
-				ResourceID:          "",
-
+				ClusterIdentityName:    "cluster-identity",
+				ClusterIdentityType:    "UserAssignedMSI",
+				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
+				ClientID:               cluster.ClientID,
+				ResourceID:             cluster.ResourceID,
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
 				ResourceGroupName:      cluster.ResourceGroup,
@@ -63,11 +59,14 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup string, cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
+func NewAzureCluster(subscriptionId, resourceGroup, clientId, resourceId string,
+	cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
 		VNet:           vnet,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
+		ClientID:       clientId,
+		ResourceID:     resourceId,
 	}
 }
