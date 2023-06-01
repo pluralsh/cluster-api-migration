@@ -63,25 +63,25 @@ func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.T
 func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
 	worker := api.AzureWorker{
 		Replicas:    int(*agentPool.Count),
-		Annotations: map[string]string{}, // TODO: Fill it.
+		Annotations: map[string]string{},
 		Spec: api.AzureWorkerSpec{
-			AdditionalTags:    nil, // TODO: Fill it.
-			Mode:              string(*agentPool.Mode),
-			SKU:               *agentPool.VMSize,
-			OSDiskSizeGB:      agentPool.OSDiskSizeGB,
-			AvailabilityZones: agentPool.AvailabilityZones,
-			NodeLabels:        agentPool.NodeLabels,
-			Taints:            Taints(agentPool),
-			Scaling: &api.ManagedMachinePoolScaling{
-				MinSize: *agentPool.MinCount,
-				MaxSize: *agentPool.MaxCount,
-			},
+			AdditionalTags:       agentPool.Tags,
+			Mode:                 string(*agentPool.Mode),
+			SKU:                  *agentPool.VMSize,
+			OSDiskSizeGB:         agentPool.OSDiskSizeGB,
+			AvailabilityZones:    agentPool.AvailabilityZones,
+			NodeLabels:           agentPool.NodeLabels,
+			Taints:               Taints(agentPool),
 			MaxPods:              agentPool.MaxPods,
 			OsDiskType:           (*string)(agentPool.OSDiskType),
 			OSType:               (*string)(agentPool.OSType),
 			EnableNodePublicIP:   agentPool.EnableNodePublicIP,
 			NodePublicIPPrefixID: agentPool.NodePublicIPPrefixID,
 			ScaleSetPriority:     (*string)(agentPool.ScaleSetPriority),
+			Scaling: &api.ManagedMachinePoolScaling{
+				MinSize: *agentPool.MinCount,
+				MaxSize: *agentPool.MaxCount,
+			},
 		},
 	}
 

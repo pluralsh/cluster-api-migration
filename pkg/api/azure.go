@@ -117,7 +117,7 @@ type AzureWorker struct {
 }
 
 type AzureWorkerSpec struct {
-	AdditionalTags       Tags                       `json:"additionalTags,omitempty"`
+	AdditionalTags       map[string]*string         `json:"additionalTags,omitempty"`
 	Mode                 string                     `json:"mode"`
 	SKU                  string                     `json:"sku"`
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
@@ -236,8 +236,6 @@ type APIServerAccessProfile struct {
 	PrivateDNSZone                 *string   `json:"privateDNSZone,omitempty"`
 	EnablePrivateClusterPublicFQDN *bool     `json:"enablePrivateClusterPublicFQDN,omitempty"`
 }
-
-type Tags map[string]string
 
 type IdentityType string
 
