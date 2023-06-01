@@ -186,9 +186,9 @@ type AADProfile struct {
 }
 
 type AddonProfile struct {
-	Name    string            `json:"name"`
-	Config  map[string]string `json:"config,omitempty"`
-	Enabled bool              `json:"enabled"`
+	Name    string             `json:"name"`
+	Config  map[string]*string `json:"config,omitempty"`
+	Enabled bool               `json:"enabled"`
 }
 
 type AutoScalerProfile struct {

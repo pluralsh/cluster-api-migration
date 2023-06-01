@@ -53,7 +53,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
 				AADProfile:             nil,
-				AddonProfiles:          nil,
+				AddonProfiles:          cluster.AddonProfiles(),
 			},
 		},
 	}, nil

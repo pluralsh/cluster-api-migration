@@ -43,9 +43,32 @@ func (cluster *Cluster) APIServerAccessProfile() *api.APIServerAccessProfile {
 	}
 }
 
+func (cluster *Cluster) AddonProfiles() []api.AddonProfile {
+	ap := cluster.Cluster.Properties.AddonProfiles
+	if len(ap) < 1 {
+		return nil
+	}
+
+	addonProfiles := []api.AddonProfile{}
+	for key, value := range ap {
+		addonProfiles = append(addonProfiles, api.AddonProfile{
+			Name:    key,
+			Config:  value.Config,
+			Enabled: *value.Enabled,
+		})
+	}
+
+	return addonProfiles
+}
+
 func (cluster *Cluster) LoadBalancerProfileOutboundIPPrefixes() []string {
+	lbp := cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile
+	if lbp == nil || lbp.OutboundIPPrefixes == nil {
+		return nil
+	}
+
 	prefixes := []string{}
-	for _, prefix := range cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile.OutboundIPPrefixes.PublicIPPrefixes {
+	for _, prefix := range lbp.OutboundIPPrefixes.PublicIPPrefixes {
 		prefixes = append(prefixes, *prefix.ID)
 	}
 
@@ -53,8 +76,13 @@ func (cluster *Cluster) LoadBalancerProfileOutboundIPPrefixes() []string {
 }
 
 func (cluster *Cluster) LoadBalancerProfileOutboundIPs() []string {
+	lbp := cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile
+	if lbp == nil || lbp.OutboundIPs == nil {
+		return nil
+	}
+
 	ips := []string{}
-	for _, ip := range cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile.OutboundIPs.PublicIPs {
+	for _, ip := range lbp.OutboundIPs.PublicIPs {
 		ips = append(ips, *ip.ID)
 	}
 
