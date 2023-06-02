@@ -10,16 +10,13 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	"github.com/aws/amazon-ec2-instance-selector/v2/pkg/selector"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/ssm"
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-
-	"github.com/aws/amazon-ec2-instance-selector/v2/pkg/selector"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
@@ -84,6 +81,7 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	newCluster := &api.Cluster{
 		Name:              this.configuration.ClusterName,
 		PodCIDRBlocks:     []string{*vpc.CidrBlock},
+		ServiceCIDRBlocks: []string{},
 		KubernetesVersion: fmt.Sprintf("v%s", *cluster.Version),
 		CloudSpec: api.CloudSpec{
 			AWSCloudSpec: &api.AWSCloudSpec{
