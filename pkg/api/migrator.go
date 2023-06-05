@@ -21,10 +21,9 @@ type AzureConfiguration struct {
 	ResourceGroup  string
 	Name           string
 
-	// Client ID and resource ID of user assigned managed indentity.
-	// It needs to be created before migration.
-	ClientID   string
-	ResourceID string
+	// Client ID and secret of service principal.
+	ClientID     string
+	ClientSecret string
 }
 
 func (config *AzureConfiguration) Validate() error {
@@ -44,8 +43,8 @@ func (config *AzureConfiguration) Validate() error {
 		return fmt.Errorf("client ID cannot be empty, ensure that it is set")
 	}
 
-	if len(config.ResourceID) == 0 {
-		return fmt.Errorf("resource ID cannot be empty, ensure that it is set")
+	if len(config.ClientSecret) == 0 {
+		return fmt.Errorf("client secret cannot be empty, ensure that it is set")
 	}
 
 	return nil

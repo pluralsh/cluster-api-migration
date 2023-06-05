@@ -34,7 +34,7 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 				ResourceGroup:  "plural",
 				Name:           "plrltest2",
 				ClientID:       "test-client-id",
-				ResourceID:     "test-resource-id",
+				ClientSecret:   "test-client-secret",
 			},
 		}
 

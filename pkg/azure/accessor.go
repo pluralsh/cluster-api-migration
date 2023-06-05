@@ -55,7 +55,7 @@ func (accessor *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 		accessor.configuration.SubscriptionID,
 		accessor.configuration.ResourceGroup,
 		accessor.configuration.ClientID,
-		accessor.configuration.ResourceID,
+		accessor.configuration.ClientSecret,
 		&c.ManagedCluster,
 		&v.VirtualNetwork)
 	return azureCluster.Convert()

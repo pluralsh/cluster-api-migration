@@ -12,7 +12,7 @@ type Cluster struct {
 	ResourceGroup  string
 	SubscriptionID string
 	ClientID       string
-	ResourceID     string
+	ClientSecret   string
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
@@ -31,12 +31,14 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		KubernetesVersion: *cluster.Cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
-				ClusterIdentityName:    "cluster-identity",
-				ClusterIdentityType:    "UserAssignedMSI",
-				AllowedNamespaces:      &api.AllowedNamespaces{},
-				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientID:               cluster.ClientID,
-				ResourceID:             cluster.ResourceID,
+				ClusterIdentityName: "cluster-identity",
+				ClusterIdentityType: "ServicePrincipal",
+				AllowedNamespaces:   &api.AllowedNamespaces{},
+				TenantID:            *cluster.Cluster.Identity.TenantID,
+				ClientID:            cluster.ClientID,
+				ClientSecret:        cluster.ClientSecret,
+				ClientSecretName:    "cluster-identity-secret",
+
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
 				ResourceGroupName:      cluster.ResourceGroup,
@@ -59,7 +61,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup, clientId, resourceId string,
+func NewAzureCluster(subscriptionId, resourceGroup, clientId, clientSecret string,
 	cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
@@ -67,6 +69,6 @@ func NewAzureCluster(subscriptionId, resourceGroup, clientId, resourceId string,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
 		ClientID:       clientId,
-		ResourceID:     resourceId,
+		ClientSecret:   clientSecret,
 	}
 }
