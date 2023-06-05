@@ -23,33 +23,18 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	return &result
 }
 
-// TaintEffect maps taint effects from Azure (camelCase, i.e. NoSchedule)
-// to form used in CAPI (kebab-case, i.e. no-schedule).
-func TaintEffect(azureTaintEffect string) api.TaintEffect {
-	switch azureTaintEffect {
-	case "NoSchedule":
-		return api.TaintEffectNoSchedule
-	case "NoExecute":
-		return api.TaintEffectNoExecute
-	case "PreferNoSchedule":
-		return api.TaintEffectPreferNoSchedule
-	default:
-		return ""
-	}
-}
-
-// Taints returns Azure worker taints mapped from key=value:NoSchedule
+// AzureTaint returns Azure worker taints mapped from key=value:NoSchedule
 // form to taint objects used in CAPI.
-func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.Taints {
-	taints := api.Taints{}
+func AzureTaint(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) []api.AzureTaint {
+	taints := []api.AzureTaint{}
 
 	for _, taint := range agentPool.NodeTaints {
 		effectSplit := strings.Split(*taint, ":")
 		if len(effectSplit) >= 2 {
 			keyValueSplit := strings.Split(effectSplit[0], "=")
 			if len(keyValueSplit) >= 2 {
-				taints = append(taints, api.Taint{
-					Effect: TaintEffect(effectSplit[1]),
+				taints = append(taints, api.AzureTaint{
+					Effect: effectSplit[1],
 					Key:    keyValueSplit[0],
 					Value:  keyValueSplit[1],
 				})
@@ -71,7 +56,7 @@ func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.A
 			OSDiskSizeGB:         agentPool.OSDiskSizeGB,
 			AvailabilityZones:    agentPool.AvailabilityZones,
 			NodeLabels:           agentPool.NodeLabels,
-			Taints:               Taints(agentPool),
+			Taints:               AzureTaint(agentPool),
 			MaxPods:              agentPool.MaxPods,
 			OsDiskType:           (*string)(agentPool.OSDiskType),
 			OSType:               (*string)(agentPool.OSType),

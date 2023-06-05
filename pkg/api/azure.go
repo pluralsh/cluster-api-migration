@@ -123,7 +123,7 @@ type AzureWorkerSpec struct {
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
 	AvailabilityZones    []*string                  `json:"availabilityZones,omitempty"`
 	NodeLabels           map[string]*string         `json:"nodeLabels"`
-	Taints               Taints                     `json:"taints,omitempty"`
+	Taints               []AzureTaint               `json:"taints,omitempty"`
 	Scaling              *ManagedMachinePoolScaling `json:"scaling,omitempty"`
 	MaxPods              *int32                     `json:"maxPods,omitempty"`
 	OsDiskType           *string                    `json:"osDiskType,omitempty"`
@@ -133,6 +133,12 @@ type AzureWorkerSpec struct {
 	KubeletConfig        *KubeletConfig             `json:"kubeletConfig,omitempty"`
 	LinuxOSConfig        *LinuxOSConfig             `json:"linuxOSConfig,omitempty"`
 	ScaleSetPriority     *string                    `json:"scaleSetPriority,omitempty"`
+}
+
+type AzureTaint struct {
+	Effect string `json:"effect"`
+	Key    string `json:"key"`
+	Value  string `json:"value"`
 }
 
 type AllowedNamespaces struct {
