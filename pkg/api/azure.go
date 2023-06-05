@@ -117,12 +117,12 @@ type AzureWorker struct {
 }
 
 type AzureWorkerSpec struct {
-	AdditionalTags       map[string]*string         `json:"additionalTags,omitempty"`
+	AdditionalTags       map[string]*string         `json:"additionalTags"`
 	Mode                 string                     `json:"mode"`
 	SKU                  string                     `json:"sku"`
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
 	AvailabilityZones    []*string                  `json:"availabilityZones,omitempty"`
-	NodeLabels           map[string]*string         `json:"nodeLabels,omitempty"`
+	NodeLabels           map[string]*string         `json:"nodeLabels"`
 	Taints               Taints                     `json:"taints,omitempty"`
 	Scaling              *ManagedMachinePoolScaling `json:"scaling,omitempty"`
 	MaxPods              *int32                     `json:"maxPods,omitempty"`
