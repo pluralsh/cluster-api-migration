@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -9,13 +10,13 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	"github.com/aws/amazon-ec2-instance-selector/v2/pkg/selector"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
-
-	"github.com/aws/amazon-ec2-instance-selector/v2/pkg/selector"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
@@ -80,17 +81,34 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	newCluster := &api.Cluster{
 		Name:              this.configuration.ClusterName,
 		PodCIDRBlocks:     []string{*vpc.CidrBlock},
+		ServiceCIDRBlocks: []string{},
 		KubernetesVersion: fmt.Sprintf("v%s", *cluster.Version),
 		CloudSpec: api.CloudSpec{
 			AWSCloudSpec: &api.AWSCloudSpec{
-				Region:     this.configuration.Region,
-				SSHKeyName: "default",
-				Version:    "",
-				RoleName:   "",
+				Region:             this.configuration.Region,
+				SecondaryCidrBlock: "",
+				EndpointAccess: api.EndpointAccess{
+					Public:      true,
+					PublicCIDRs: nil,
+					Private:     false,
+				},
+				RoleAdditionalPolicies: []string{},
+				EncryptionConfig: api.EncryptionConfig{
+					Provider:  "",
+					Resources: []string{},
+				},
+				AdditionalTags:             map[string]string{},
+				IAMAuthenticatorConfig:     api.IAMAuthenticatorConfig{},
+				OIDCIdentityProviderConfig: api.OIDCIdentityProviderConfig{},
+				Logging:                    api.ControlPlaneLoggingSpec{},
+				SSHKeyName:                 "default",
+				Version:                    "",
+				RoleName:                   "",
 				ControlPlaneEndpoint: clusterv1.APIEndpoint{
 					Host: *cluster.Endpoint,
 					Port: 443,
 				},
+				Labels:                nil,
 				Addons:                []api.Addon{},
 				AssociateOIDCProvider: false,
 				Bastion: infrav1.Bastion{
@@ -104,7 +122,7 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 					VPC: infrav1.VPCSpec{
 						ID:                         *vpc.VpcId,
 						CidrBlock:                  *vpc.CidrBlock,
-						Tags:                       map[string]string{},
+						Tags:                       map[string]string{fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned"},
 						AvailabilityZoneSelection:  &infrav1.AZSelectionSchemeOrdered,
 						AvailabilityZoneUsageLimit: &azLimit,
 					},
@@ -169,7 +187,7 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 			AvailabilityZone: *subnet.AvailabilityZone,
 			RouteTableID:     rtID,
 			NatGatewayID:     gtID,
-			Tags:             map[string]string{},
+			Tags:             map[string]string{fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned"},
 		}
 		for _, tag := range subnet.Tags {
 			sub.Tags[*tag.Key] = *tag.Value
@@ -178,6 +196,19 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 		newCluster.AWSCloudSpec.NetworkSpec.Subnets = append(newCluster.AWSCloudSpec.NetworkSpec.Subnets, sub)
 	}
 	return newCluster, nil
+}
+
+type AmiVersion struct {
+	Version string `json:"release_version"`
+}
+
+func taintEffect(t string) api.TaintEffect {
+	if t == "NO_SCHEDULE" {
+		return api.TaintEffectNoSchedule
+	} else if t == "NO_EXECUTE" {
+		return api.TaintEffectNoExecute
+	}
+	return api.TaintEffectPreferNoSchedule
 }
 
 func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
@@ -189,6 +220,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	svc := ec2.NewFromConfig(cfg)
 	mySession := session.Must(session.NewSession())
 	eksSvc := ekssdk.New(mySession)
+	ssmCvc := ssm.New(mySession)
 
 	ngList, err := eksSvc.ListNodegroups(&ekssdk.ListNodegroupsInput{
 		ClusterName: &this.configuration.ClusterName,
@@ -203,8 +235,11 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 				Replicas:    0,
 				Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
 				Spec: api.AWSWorkerSpec{
-					AMIType:      "AL2_x86_64",
-					CapacityType: "onDemand",
+					Labels:         map[string]*string{},
+					AdditionalTags: map[string]string{},
+					AMIType:        "AL2_x86_64",
+					CapacityType:   "onDemand",
+					AMIVersion:     "",
 				},
 			},
 		},
@@ -217,6 +252,18 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			ClusterName:   &this.configuration.ClusterName,
 			NodegroupName: ng,
 		})
+		if err != nil {
+			return nil, err
+		}
+		inputName := fmt.Sprintf("/aws/service/eks/optimized-ami/%s/amazon-linux-2/recommended", *nodeGroup.Nodegroup.Version)
+		parameters, err := ssmCvc.GetParameter(&ssm.GetParameterInput{
+			Name: &inputName,
+		})
+		if err != nil {
+			return nil, err
+		}
+		amiVersion := AmiVersion{}
+		err = json.Unmarshal([]byte(*parameters.Parameter.Value), &amiVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +287,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			Annotations: nil,
 			Spec: api.AWSWorkerSpec{
 				Labels:       nodeGroup.Nodegroup.Labels,
-				AMIVersion:   *nodeGroup.Nodegroup.Version,
+				AMIVersion:   amiVersion.Version,
 				AMIType:      api.ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
 				DiskSize:     int32(*nodeGroup.Nodegroup.DiskSize),
 				InstanceType: nodeGroup.Nodegroup.InstanceTypes[0],
@@ -254,7 +301,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 					newTaints := api.Taints{}
 					for _, taint := range taints {
 						newTaints = append(newTaints, api.Taint{
-							Effect: api.TaintEffect(*taint.Effect),
+							Effect: taintEffect(*taint.Effect),
 							Key:    *taint.Key,
 							Value:  *taint.Value,
 						})
@@ -263,7 +310,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 				}(nodeGroup.Nodegroup.Taints),
 				UpdateConfig: nil,
 				AdditionalTags: func(tags map[string]*string) infrav1.Tags {
-					newTags := infrav1.Tags{}
+					newTags := infrav1.Tags{fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned"}
 					for key, value := range tags {
 						newTags[key] = *value
 					}
