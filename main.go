@@ -31,8 +31,8 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 		config := api.Configuration{
 			AzureConfiguration: &api.AzureConfiguration{
 				SubscriptionID: os.Getenv("AZURE_SUBSCRIPTION_ID"),
-				ResourceGroup:  "plural",
-				Name:           "plrltest2",
+				ResourceGroup:  "aaa",
+				Name:           "aaa",
 				ClientID:       "test-client-id",
 				ClientSecret:   "test-client-secret",
 			},
