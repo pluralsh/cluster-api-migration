@@ -136,8 +136,8 @@ type AzureWorkerSpec struct {
 }
 
 type AllowedNamespaces struct {
-	NamespaceList []string              `json:"list"`
-	Selector      *metav1.LabelSelector `json:"selector"`
+	NamespaceList []string              `json:"list,omitempty"`
+	Selector      *metav1.LabelSelector `json:"selector,omitempty"`
 }
 
 type ManagedControlPlaneVirtualNetwork struct {
