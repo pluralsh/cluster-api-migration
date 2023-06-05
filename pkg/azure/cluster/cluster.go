@@ -31,14 +31,13 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		KubernetesVersion: *cluster.Cluster.Properties.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
-				ClusterIdentityName: "cluster-identity",
-				ClusterIdentityType: "ServicePrincipal",
-				AllowedNamespaces:   &api.AllowedNamespaces{},
-				TenantID:            *cluster.Cluster.Identity.TenantID,
-				ClientID:            cluster.ClientID,
-				ClientSecret:        cluster.ClientSecret,
-				ClientSecretName:    "cluster-identity-secret",
-
+				ClusterIdentityName:    "cluster-identity",
+				ClusterIdentityType:    "ServicePrincipal",
+				AllowedNamespaces:      &api.AllowedNamespaces{},
+				TenantID:               *cluster.Cluster.Identity.TenantID,
+				ClientID:               cluster.ClientID,
+				ClientSecret:           cluster.ClientSecret,
+				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
 				ResourceGroupName:      cluster.ResourceGroup,

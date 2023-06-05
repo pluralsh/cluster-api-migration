@@ -8,11 +8,11 @@ import (
 
 type AzureCloudSpec struct {
 	// Name of AzureClusterIdentity to be used when reconciling this cluster.
-	ClusterIdentityName string `json:"clusterIdentityName,omitempty"`
+	ClusterIdentityName string `json:"clusterIdentityName"`
 
 	// Type of Azure Identity used.
 	// One of: ServicePrincipal, ServicePrincipalCertificate, UserAssignedMSI or ManualServicePrincipal.
-	ClusterIdentityType IdentityType `json:"clusterIdentityType,omitempty"`
+	ClusterIdentityType IdentityType `json:"clusterIdentityType"`
 
 	// AllowedNamespaces is used to identify the namespaces the clusters are allowed to use the identity from.
 	// Namespaces can be selected either using an array of namespaces or with label selector.
