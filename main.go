@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	provider = api.ClusterProviderGoogle
+	provider = api.ClusterProviderAzure
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	switch provider {
 	case api.ClusterProviderGoogle:
-		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv(api.GCPEncodedCredentialsEnvVar))
+		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
 
 		return &api.Configuration{
 			GCPConfiguration: &api.GCPConfiguration{
@@ -30,9 +30,11 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	case api.ClusterProviderAzure:
 		config := api.Configuration{
 			AzureConfiguration: &api.AzureConfiguration{
-				SubscriptionID: os.Getenv(api.AzureSubscriptionIdEnvVar),
+				SubscriptionID: os.Getenv("AZURE_SUBSCRIPTION_ID"),
 				ResourceGroup:  "plural",
 				Name:           "plrltest2",
+				ClientID:       "test-client-id",
+				ResourceID:     "test-resource-id",
 			},
 		}
 

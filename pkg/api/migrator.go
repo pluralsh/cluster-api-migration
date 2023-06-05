@@ -4,13 +4,6 @@ import (
 	"fmt"
 )
 
-const (
-	AzureSubscriptionIdEnvVar   = "AZURE_SUBSCRIPTION_ID"
-	AzureClientIdEnvVar         = "AZURE_CLIENT_ID"
-	AzureClientSecretEnvVar     = "AZURE_CLIENT_SECRET"
-	GCPEncodedCredentialsEnvVar = "GCP_B64ENCODED_CREDENTIALS"
-)
-
 type Configuration struct {
 	*AWSConfiguration
 	*AzureConfiguration
@@ -23,14 +16,20 @@ type AWSConfiguration struct {
 }
 
 type AzureConfiguration struct {
-	SubscriptionID string // TODO: Figure out best way to pass it.
+	// Details required to get cluster to migrate.
+	SubscriptionID string
 	ResourceGroup  string
 	Name           string
+
+	// Client ID and resource ID of user assigned managed indentity.
+	// It needs to be created before migration.
+	ClientID   string
+	ResourceID string
 }
 
 func (config *AzureConfiguration) Validate() error {
 	if len(config.SubscriptionID) == 0 {
-		return fmt.Errorf("subscription ID cannot be empty, ensure that %s evironment variable is set", AzureSubscriptionIdEnvVar)
+		return fmt.Errorf("subscription ID cannot be empty, ensure that it is set")
 	}
 
 	if len(config.ResourceGroup) == 0 {
@@ -39,6 +38,14 @@ func (config *AzureConfiguration) Validate() error {
 
 	if len(config.Name) == 0 {
 		return fmt.Errorf("name cannot be empty, ensure that it is set")
+	}
+
+	if len(config.ClientID) == 0 {
+		return fmt.Errorf("client ID cannot be empty, ensure that it is set")
+	}
+
+	if len(config.ResourceID) == 0 {
+		return fmt.Errorf("resource ID cannot be empty, ensure that it is set")
 	}
 
 	return nil

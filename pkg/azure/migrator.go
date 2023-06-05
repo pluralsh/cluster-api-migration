@@ -10,12 +10,13 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
-func (this *Migrator) Convert() (*api.Values, error) {
-	c, err := this.accessor.GetCluster()
+func (migrator *Migrator) Convert() (*api.Values, error) {
+	c, err := migrator.accessor.GetCluster()
 	if err != nil {
 		return nil, err
 	}
-	w, err := this.accessor.GetWorkers()
+
+	w, err := migrator.accessor.GetWorkers()
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +37,7 @@ func NewAzureMigrator(configuration *api.AzureConfiguration) (api.Migrator, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return &Migrator{
 		accessor: a,
 	}, nil

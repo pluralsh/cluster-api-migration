@@ -104,9 +104,177 @@ var (
 	EKSTokenMethodAWSCli = EKSTokenMethod("aws-cli")
 )
 
+// ControlPlaneLoggingSpec defines what EKS control plane logs that should be enabled.
+type ControlPlaneLoggingSpec struct {
+	// APIServer indicates if the Kubernetes API Server log (kube-apiserver) shoulkd be enabled
+	// +kubebuilder:default=false
+	APIServer bool `json:"apiServer"`
+	// Audit indicates if the Kubernetes API audit log should be enabled
+	Audit bool `json:"audit"`
+	// Authenticator indicates if the iam authenticator log should be enabled
+	Authenticator bool `json:"authenticator"`
+	// ControllerManager indicates if the controller manager (kube-controller-manager) log should be enabled
+	ControllerManager bool `json:"controllerManager"`
+	// Scheduler indicates if the Kubernetes scheduler (kube-scheduler) log should be enabled
+	Scheduler bool `json:"scheduler"`
+}
+
+// EncryptionConfig specifies the encryption configuration for the EKS clsuter.
+type EncryptionConfig struct {
+	// Provider specifies the ARN or alias of the CMK (in AWS KMS)
+	Provider string `json:"provider,omitempty"`
+	// Resources specifies the resources to be encrypted
+	Resources []string `json:"resources,omitempty"`
+}
+
+// RoleMapping represents a mapping from a IAM role to Kubernetes users and groups.
+type RoleMapping struct {
+	// RoleARN is the AWS ARN for the role to map
+	// +kubebuilder:validation:MinLength:=31
+	RoleARN string `json:"rolearn"`
+	// KubernetesMapping holds the RBAC details for the mapping
+	KubernetesMapping `json:",inline"`
+}
+
+// UserMapping represents a mapping from an IAM user to Kubernetes users and groups.
+type UserMapping struct {
+	// UserARN is the AWS ARN for the user to map
+	// +kubebuilder:validation:MinLength:=31
+	UserARN string `json:"userarn"`
+	// KubernetesMapping holds the RBAC details for the mapping
+	KubernetesMapping `json:",inline"`
+}
+
+// KubernetesMapping represents the kubernetes RBAC mapping.
+type KubernetesMapping struct {
+	// UserName is a kubernetes RBAC user subject
+	UserName string `json:"username"`
+	// Groups is a list of kubernetes RBAC groups
+	Groups []string `json:"groups"`
+}
+
+// IAMAuthenticatorConfig represents an aws-iam-authenticator configuration.
+type IAMAuthenticatorConfig struct {
+	// RoleMappings is a list of role mappings
+	// +optional
+	RoleMappings []RoleMapping `json:"mapRoles,omitempty"`
+	// UserMappings is a list of user mappings
+	// +optional
+	UserMappings []UserMapping `json:"mapUsers,omitempty"`
+}
+
+type OIDCIdentityProviderConfig struct {
+
+	// This is also known as audience. The ID for the client application that makes
+	// authentication requests to the OpenID identity provider.
+	// +kubebuilder:validation:Required
+	ClientID string `json:"clientId,omitempty"`
+
+	// The JWT claim that the provider uses to return your groups.
+	// +optional
+	GroupsClaim *string `json:"groupsClaim,omitempty"`
+
+	// The prefix that is prepended to group claims to prevent clashes with existing
+	// names (such as system: groups). For example, the valueoidc: will create group
+	// names like oidc:engineering and oidc:infra.
+	// +optional
+	GroupsPrefix *string `json:"groupsPrefix,omitempty"`
+
+	// The name of the OIDC provider configuration.
+	//
+	// IdentityProviderConfigName is a required field
+	// +kubebuilder:validation:Required
+	IdentityProviderConfigName string `json:"identityProviderConfigName,omitempty"`
+
+	// The URL of the OpenID identity provider that allows the API server to discover
+	// public signing keys for verifying tokens. The URL must begin with https://
+	// and should correspond to the iss claim in the provider's OIDC ID tokens.
+	// Per the OIDC standard, path components are allowed but query parameters are
+	// not. Typically the URL consists of only a hostname, like https://server.example.org
+	// or https://example.com. This URL should point to the level below .well-known/openid-configuration
+	// and must be publicly accessible over the internet.
+	//
+	// +kubebuilder:validation:Required
+	IssuerURL string `json:"issuerUrl,omitempty"`
+
+	// The key value pairs that describe required claims in the identity token.
+	// If set, each claim is verified to be present in the token with a matching
+	// value. For the maximum number of claims that you can require, see Amazon
+	// EKS service quotas (https://docs.aws.amazon.com/eks/latest/userguide/service-quotas.html)
+	// in the Amazon EKS User Guide.
+	// +optional
+	RequiredClaims map[string]string `json:"requiredClaims,omitempty"`
+
+	// The JSON Web Token (JWT) claim to use as the username. The default is sub,
+	// which is expected to be a unique identifier of the end user. You can choose
+	// other claims, such as email or name, depending on the OpenID identity provider.
+	// Claims other than email are prefixed with the issuer URL to prevent naming
+	// clashes with other plug-ins.
+	// +optional
+	UsernameClaim *string `json:"usernameClaim,omitempty"`
+
+	// The prefix that is prepended to username claims to prevent clashes with existing
+	// names. If you do not provide this field, and username is a value other than
+	// email, the prefix defaults to issuerurl#. You can use the value - to disable
+	// all prefixing.
+	// +optional
+	UsernamePrefix *string `json:"usernamePrefix,omitempty"`
+
+	// tags to apply to oidc identity provider association
+	// +optional
+	Tags infrav1.Tags `json:"tags,omitempty"`
+}
+
+// EndpointAccess specifies how control plane endpoints are accessible.
+type EndpointAccess struct {
+	// Public controls whether control plane endpoints are publicly accessible
+	// +optional
+	Public bool `json:"public,omitempty"`
+	// PublicCIDRs specifies which blocks can access the public endpoint
+	// +optional
+	PublicCIDRs []string `json:"publicCIDRs,omitempty"`
+	// Private points VPC-internal control plane access to the private endpoint
+	// +optional
+	Private bool `json:"private,omitempty"`
+}
+
 type AWSCloudSpec struct {
 	// The AWS Region the cluster lives in.
 	Region string `json:"region,omitempty"`
+
+	// SecondaryCidrBlock is the additional CIDR range to use for pod IPs.
+	// Must be within the 100.64.0.0/10 or 198.19.0.0/16 range.
+	SecondaryCidrBlock string `json:"secondaryCidrBlock"`
+
+	// RoleAdditionalPolicies allows you to attach additional polices to
+	// the control plane role. You must enable the EKSAllowAddRoles
+	// feature flag to incorporate these into the created role.
+	// +optional
+	RoleAdditionalPolicies []string `json:"roleAdditionalPolicies"`
+
+	// EncryptionConfig specifies the encryption configuration for the cluster
+	// +optional
+	EncryptionConfig EncryptionConfig `json:"encryptionConfig"`
+
+	// AdditionalTags is an optional set of tags to add to AWS resources managed by the AWS provider, in addition to the
+	// ones added by default.
+	AdditionalTags infrav1.Tags `json:"additionalTags"`
+
+	// IAMAuthenticatorConfig allows the specification of any additional user or role mappings
+	// for use when generating the aws-iam-authenticator configuration. If this is nil the
+	// default configuration is still generated for the cluster.
+	// +optional
+	IAMAuthenticatorConfig IAMAuthenticatorConfig `json:"iamAuthenticatorConfig,omitempty"`
+
+	// IdentityProviderconfig is used to specify the oidc provider config
+	// to be attached with this eks cluster
+	// +optional
+	OIDCIdentityProviderConfig OIDCIdentityProviderConfig `json:"oidcIdentityProviderConfig,omitempty"`
+
+	// Logging specifies which EKS Cluster logs should be enabled. Entries for
+	// each of the enabled logs will be sent to CloudWatch
+	// +optional
+	Logging ControlPlaneLoggingSpec `json:"logging,omitempty"`
 
 	// SSHKeyName is the name of the ssh key to attach to the bastion host. Valid values are empty string (do not use SSH keys), a valid SSH key name, or omitted (use the default SSH key name)
 	// +optional
@@ -117,6 +285,10 @@ type AWSCloudSpec struct {
 	// will be used.
 	// +optional
 	Version string `json:"version,omitempty"`
+
+	// Endpoints specifies access to this cluster's control plane endpoints
+	// +optional
+	EndpointAccess EndpointAccess `json:"endpointAccess"`
 
 	// RoleName specifies the name of IAM role that gives EKS
 	// permission to make API calls. If the role is pre-existing
@@ -219,20 +391,16 @@ type AWSWorker struct {
 type AWSWorkerSpec struct {
 	// Labels specifies labels for the Kubernetes node objects
 	// +optional
-	Labels map[string]*string `json:"labels,omitempty"`
+	Labels map[string]*string `json:"labels"`
 	// AMIVersion defines the desired AMI release version. If no version number
 	// is supplied then the latest version for the Kubernetes version
 	// will be used
 	// +optional
-	AMIVersion string `json:"amiVersion,omitempty"`
+	AMIVersion string `json:"amiVersion"`
 	// AMIType defines the AMI type
-	// +kubebuilder:validation:Enum:=AL2_x86_64;AL2_x86_64_GPU;AL2_ARM_64;CUSTOM
-	// +kubebuilder:default:=AL2_x86_64
 	// +optional
 	AMIType ManagedMachineAMIType `json:"amiType,omitempty"`
 	// CapacityType specifies the capacity type for the ASG behind this pool
-	// +kubebuilder:validation:Enum:=onDemand;spot
-	// +kubebuilder:default:=onDemand
 	// +optional
 	CapacityType ManagedMachinePoolCapacityType `json:"capacityType,omitempty"`
 	// DiskSize specifies the root disk size
@@ -259,8 +427,7 @@ type AWSWorkerSpec struct {
 	UpdateConfig *UpdateConfig `json:"updateConfig,omitempty"`
 	// AdditionalTags is an optional set of tags to add to AWS resources managed by the AWS provider, in addition to the
 	// ones added by default.
-	// +optional
-	AdditionalTags infrav1.Tags `json:"additionalTags,omitempty"`
+	AdditionalTags infrav1.Tags `json:"additionalTags"`
 	// RoleAdditionalPolicies allows you to attach additional polices to
 	// the node group role. You must enable the EKSAllowAddRoles
 	// feature flag to incorporate these into the created role.

@@ -58,7 +58,7 @@ func (this *Cluster) KubernetesVersion() string {
 func (this *Cluster) Convert() *api.Cluster {
 	return &api.Cluster{
 		Name:              this.GetName(),
-		CIDRBlocks:        this.CIDRBlocks(),
+		PodCIDRBlocks:     this.CIDRBlocks(),
 		KubernetesVersion: this.KubernetesVersion(),
 		CloudSpec: api.CloudSpec{
 			GCPCloudSpec: &api.GCPCloudSpec{
