@@ -137,6 +137,10 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 			},
 		},
 	}
+	if len(vpc.Ipv6CidrBlockAssociationSet) > 0 {
+		newCluster.AWSCloudSpec.NetworkSpec.VPC.IPv6 = &infrav1.IPv6{}
+	}
+
 	for _, vpcTag := range vpc.Tags {
 		newCluster.AWSCloudSpec.NetworkSpec.VPC.Tags[*vpcTag.Key] = *vpcTag.Value
 	}
