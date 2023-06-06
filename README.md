@@ -12,13 +12,16 @@ To test migrations use following repos/branches:
 Setup Azure cluster using old method:
 
 ```sh
-plural install
+plural init
 plural bundle install bootstrap azure-k8s
 plural build
 plural deploy
 ```
 
-Once AKS is up and running you can start the migration.
+Once AKS is up and running you can start the migration by setting following tags on it:
+
+- `sigs.k8s.io_cluster-api-provider-azure_cluster_aaa` : `owned`
+- `sigs.k8s.io_cluster-api-provider-azure_role` : `common`
 
 Generate new `values.yaml` using this repo and move it to artifacts repo:
 
@@ -46,8 +49,3 @@ plural workspace helm bootstrap --skip cluster-api-cluster
 sleep 60
 plural workspace helm bootstrap
 ```
-
-At the moment it is required to set following AKS tags manually:
-
-- `sigs.k8s.io_cluster-api-provider-azure_cluster_aaa` : `owned`
-- `sigs.k8s.io_cluster-api-provider-azure_role` : `common`
