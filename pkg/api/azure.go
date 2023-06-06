@@ -25,7 +25,7 @@ type AzureCloudSpec struct {
 	ClientID string `json:"clientID"`
 
 	// Service Principal password.
-	ClientSecret string `json:"clientSecret,omitempty"`
+	ClientSecret string `json:"clientSecret"`
 
 	// Name of Secret containing clientSecret.
 	ClientSecretName string `json:"clientSecretName,omitempty"`

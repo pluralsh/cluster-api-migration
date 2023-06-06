@@ -34,8 +34,8 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				ClusterIdentityType:    "ServicePrincipal",
 				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientID:               "--PLACEHOLDER--", // Using placeholder as it will be filled by values.yaml.tpl.
-				ClientSecret:           "--PLACEHOLDER--", // Using placeholder as it will be filled by values.yaml.tpl.
+				ClientID:               "", // Using empty string as it will be filled by values.yaml.tpl.
+				ClientSecret:           "", // Using empty string as it will be filled by values.yaml.tpl.
 				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
@@ -52,7 +52,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
-				AADProfile:             nil,
+				AADProfile:             nil, // TODO: Do we need to fill it?
 				AddonProfiles:          cluster.AddonProfiles(),
 			},
 		},
