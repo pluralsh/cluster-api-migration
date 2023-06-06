@@ -34,8 +34,8 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				ClusterIdentityType:    "ServicePrincipal",
 				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientID:               "", // Leaving it empty as it will be filled by values.yaml.tpl.
-				ClientSecret:           "", // Leaving it empty as it will be filled by values.yaml.tpl.
+				ClientID:               "--PLACEHOLDER--", // Using placeholder as it will be filled by values.yaml.tpl.
+				ClientSecret:           "--PLACEHOLDER--", // Using placeholder as it will be filled by values.yaml.tpl.
 				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
