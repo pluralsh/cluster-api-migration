@@ -15,7 +15,6 @@ type Workers struct {
 
 func (workers *Workers) Workers() *api.AzureWorkers {
 	result := api.AzureWorkers{}
-
 	for _, agentPool := range workers.Cluster.Properties.AgentPoolProfiles {
 		result[*agentPool.Name] = Worker(agentPool)
 	}
@@ -23,11 +22,10 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	return &result
 }
 
-// AzureTaint returns Azure worker taints mapped from key=value:NoSchedule
+// Taints returns Azure worker taints mapped from key=value:NoSchedule
 // form to taint objects used in CAPI.
-func AzureTaint(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) []api.AzureTaint {
+func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) []api.AzureTaint {
 	taints := []api.AzureTaint{}
-
 	for _, taint := range agentPool.NodeTaints {
 		effectSplit := strings.Split(*taint, ":")
 		if len(effectSplit) >= 2 {
@@ -45,6 +43,20 @@ func AzureTaint(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) [
 	return taints
 }
 
+// NodeLabels returns Azure node labels filtered from  mapped from key=value:NoSchedule
+// form to taint objects used in CAPI.
+func NodeLabels(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) map[string]*string {
+	labels := make(map[string]*string)
+	for key, value := range agentPool.NodeLabels {
+		// Node pool label key must not start with kubernetes.azure.com.
+		if !strings.HasPrefix(key, "kubernetes.azure.com") {
+			labels[key] = value
+		}
+	}
+
+	return labels
+}
+
 func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
 	worker := api.AzureWorker{
 		Replicas:    int(*agentPool.Count),
@@ -55,8 +67,8 @@ func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.A
 			SKU:                  *agentPool.VMSize,
 			OSDiskSizeGB:         agentPool.OSDiskSizeGB,
 			AvailabilityZones:    agentPool.AvailabilityZones,
-			NodeLabels:           agentPool.NodeLabels,
-			Taints:               AzureTaint(agentPool),
+			NodeLabels:           NodeLabels(agentPool),
+			Taints:               Taints(agentPool),
 			MaxPods:              agentPool.MaxPods,
 			OsDiskType:           (*string)(agentPool.OSDiskType),
 			OSType:               (*string)(agentPool.OSType),
