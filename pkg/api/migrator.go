@@ -16,14 +16,9 @@ type AWSConfiguration struct {
 }
 
 type AzureConfiguration struct {
-	// Details required to get cluster to migrate.
 	SubscriptionID string
 	ResourceGroup  string
 	Name           string
-
-	// Client ID and secret of service principal.
-	ClientID     string
-	ClientSecret string
 }
 
 func (config *AzureConfiguration) Validate() error {
@@ -37,14 +32,6 @@ func (config *AzureConfiguration) Validate() error {
 
 	if len(config.Name) == 0 {
 		return fmt.Errorf("name cannot be empty, ensure that it is set")
-	}
-
-	if len(config.ClientID) == 0 {
-		return fmt.Errorf("client ID cannot be empty, ensure that it is set")
-	}
-
-	if len(config.ClientSecret) == 0 {
-		return fmt.Errorf("client secret cannot be empty, ensure that it is set")
 	}
 
 	return nil

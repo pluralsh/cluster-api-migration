@@ -11,8 +11,6 @@ type Cluster struct {
 	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
-	ClientID       string
-	ClientSecret   string
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
@@ -35,8 +33,8 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				ClusterIdentityType:    "ServicePrincipal",
 				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientID:               cluster.ClientID,
-				ClientSecret:           cluster.ClientSecret,
+				ClientID:               "", // Leaving it empty as it will be filled by values.yaml.tpl.
+				ClientSecret:           "", // Leaving it empty as it will be filled by values.yaml.tpl.
 				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
@@ -60,14 +58,12 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup, clientId, clientSecret string,
+func NewAzureCluster(subscriptionId, resourceGroup string,
 	cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
 		VNet:           vnet,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
-		ClientID:       clientId,
-		ClientSecret:   clientSecret,
 	}
 }
