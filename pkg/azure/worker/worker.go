@@ -22,8 +22,6 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	return &result
 }
 
-// Taints returns Azure worker taints mapped from key=value:NoSchedule
-// form to taint objects used in CAPI.
 func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) []api.AzureTaint {
 	taints := []api.AzureTaint{}
 	for _, taint := range agentPool.NodeTaints {
@@ -43,8 +41,6 @@ func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) []api
 	return taints
 }
 
-// NodeLabels returns Azure node labels filtered from  mapped from key=value:NoSchedule
-// form to taint objects used in CAPI.
 func NodeLabels(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) map[string]*string {
 	labels := make(map[string]*string)
 	for key, value := range agentPool.NodeLabels {
