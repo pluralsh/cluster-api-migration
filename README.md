@@ -4,8 +4,8 @@
 
 To test migrations use following repos/branches:
 
-- https://github.com/pluralsh/plural-cli/tree/bootstrap
-- https://github.com/pluralsh/plural-artifacts/tree/cluster-api-cluster
+- <https://github.com/pluralsh/plural-cli/tree/bootstrap>
+- <https://github.com/pluralsh/plural-artifacts/tree/cluster-api-cluster>
 
 ### Azure
 
