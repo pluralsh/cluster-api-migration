@@ -33,6 +33,9 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 				SubscriptionID: os.Getenv("AZURE_SUBSCRIPTION_ID"),
 				ResourceGroup:  "aaarg",
 				Name:           "aaa",
+				// It can be retrieved by using terraform show command in installation repo's bootstap/terraform directory.
+				// The path is module.azure-bootstrap.module.aks.tls_private_key.ssh.public_key_openssh.
+				SSHPublicKey: os.Getenv("AZURE_B64ENCODED_SSH_PUBLIC_KEY"),
 			},
 		}
 

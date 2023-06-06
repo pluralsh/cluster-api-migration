@@ -19,6 +19,7 @@ type AzureConfiguration struct {
 	SubscriptionID string
 	ResourceGroup  string
 	Name           string
+	SSHPublicKey   string
 }
 
 func (config *AzureConfiguration) Validate() error {

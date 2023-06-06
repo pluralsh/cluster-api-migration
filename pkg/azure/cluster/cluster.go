@@ -11,6 +11,7 @@ type Cluster struct {
 	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
+	SSHPublicKey   string
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
@@ -45,7 +46,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				NetworkPolicy:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPolicy),
 				OutboundType:           (*string)(cluster.Cluster.Properties.NetworkProfile.OutboundType),
 				DNSServiceIP:           cluster.Cluster.Properties.NetworkProfile.DNSServiceIP,
-				SSHPublicKey:           "",
+				SSHPublicKey:           cluster.SSHPublicKey,
 				SKU:                    cluster.SKU(),
 				LoadBalancerSKU:        (*string)(cluster.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
@@ -58,12 +59,13 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup string,
+func NewAzureCluster(subscriptionId, resourceGroup, sshPublicKey string,
 	cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
 		VNet:           vnet,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
+		SSHPublicKey:   sshPublicKey,
 	}
 }
