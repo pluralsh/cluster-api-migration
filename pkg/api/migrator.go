@@ -16,15 +16,10 @@ type AWSConfiguration struct {
 }
 
 type AzureConfiguration struct {
-	// Details required to get cluster to migrate.
 	SubscriptionID string
 	ResourceGroup  string
 	Name           string
-
-	// Client ID and resource ID of user assigned managed indentity.
-	// It needs to be created before migration.
-	ClientID   string
-	ResourceID string
+	SSHPublicKey   string
 }
 
 func (config *AzureConfiguration) Validate() error {
@@ -38,14 +33,6 @@ func (config *AzureConfiguration) Validate() error {
 
 	if len(config.Name) == 0 {
 		return fmt.Errorf("name cannot be empty, ensure that it is set")
-	}
-
-	if len(config.ClientID) == 0 {
-		return fmt.Errorf("client ID cannot be empty, ensure that it is set")
-	}
-
-	if len(config.ResourceID) == 0 {
-		return fmt.Errorf("resource ID cannot be empty, ensure that it is set")
 	}
 
 	return nil

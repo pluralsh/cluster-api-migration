@@ -2,7 +2,6 @@ package aws
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -16,7 +15,6 @@ import (
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
-	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
@@ -137,6 +135,10 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 			},
 		},
 	}
+	if len(vpc.Ipv6CidrBlockAssociationSet) > 0 {
+		newCluster.AWSCloudSpec.NetworkSpec.VPC.IPv6 = &infrav1.IPv6{}
+	}
+
 	for _, vpcTag := range vpc.Tags {
 		newCluster.AWSCloudSpec.NetworkSpec.VPC.Tags[*vpcTag.Key] = *vpcTag.Value
 	}
@@ -198,10 +200,6 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	return newCluster, nil
 }
 
-type AmiVersion struct {
-	Version string `json:"release_version"`
-}
-
 func taintEffect(t string) api.TaintEffect {
 	if t == "NO_SCHEDULE" {
 		return api.TaintEffectNoSchedule
@@ -220,7 +218,6 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	svc := ec2.NewFromConfig(cfg)
 	mySession := session.Must(session.NewSession())
 	eksSvc := ekssdk.New(mySession)
-	ssmCvc := ssm.New(mySession)
 
 	ngList, err := eksSvc.ListNodegroups(&ekssdk.ListNodegroupsInput{
 		ClusterName: &this.configuration.ClusterName,
@@ -255,18 +252,6 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 		if err != nil {
 			return nil, err
 		}
-		inputName := fmt.Sprintf("/aws/service/eks/optimized-ami/%s/amazon-linux-2/recommended", *nodeGroup.Nodegroup.Version)
-		parameters, err := ssmCvc.GetParameter(&ssm.GetParameterInput{
-			Name: &inputName,
-		})
-		if err != nil {
-			return nil, err
-		}
-		amiVersion := AmiVersion{}
-		err = json.Unmarshal([]byte(*parameters.Parameter.Value), &amiVersion)
-		if err != nil {
-			return nil, err
-		}
 		availabilityZones := []string{}
 		subnetID := "subnet-id"
 		for _, subnet := range nodeGroup.Nodegroup.Subnets {
@@ -287,7 +272,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			Annotations: nil,
 			Spec: api.AWSWorkerSpec{
 				Labels:       nodeGroup.Nodegroup.Labels,
-				AMIVersion:   amiVersion.Version,
+				AMIVersion:   "", //amiVersion.Version,
 				AMIType:      api.ManagedMachineAMIType(*nodeGroup.Nodegroup.AmiType),
 				DiskSize:     int32(*nodeGroup.Nodegroup.DiskSize),
 				InstanceType: nodeGroup.Nodegroup.InstanceTypes[0],

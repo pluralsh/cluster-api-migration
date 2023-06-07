@@ -1,8 +1,8 @@
 package cluster
 
 import (
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v3"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
@@ -11,8 +11,7 @@ type Cluster struct {
 	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
-	ClientID       string
-	ResourceID     string
+	SSHPublicKey   string
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
@@ -32,11 +31,12 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
 				ClusterIdentityName:    "cluster-identity",
-				ClusterIdentityType:    "UserAssignedMSI",
+				ClusterIdentityType:    "ServicePrincipal",
 				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientID:               cluster.ClientID,
-				ResourceID:             cluster.ResourceID,
+				ClientID:               "", // Using empty string as it will be filled by values.yaml.tpl.
+				ClientSecret:           "", // Using empty string as it will be filled by values.yaml.tpl.
+				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
 				ResourceGroupName:      cluster.ResourceGroup,
@@ -46,27 +46,26 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				NetworkPolicy:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPolicy),
 				OutboundType:           (*string)(cluster.Cluster.Properties.NetworkProfile.OutboundType),
 				DNSServiceIP:           cluster.Cluster.Properties.NetworkProfile.DNSServiceIP,
-				SSHPublicKey:           "",
+				SSHPublicKey:           cluster.SSHPublicKey,
 				SKU:                    cluster.SKU(),
 				LoadBalancerSKU:        (*string)(cluster.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
-				AADProfile:             nil,
+				AADProfile:             nil, // TODO: Do we need to fill it?
 				AddonProfiles:          cluster.AddonProfiles(),
 			},
 		},
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup, clientId, resourceId string,
+func NewAzureCluster(subscriptionId, resourceGroup, sshPublicKey string,
 	cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
 		VNet:           vnet,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
-		ClientID:       clientId,
-		ResourceID:     resourceId,
+		SSHPublicKey:   sshPublicKey,
 	}
 }

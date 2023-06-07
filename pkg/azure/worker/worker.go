@@ -3,7 +3,7 @@ package worker
 import (
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
@@ -15,7 +15,6 @@ type Workers struct {
 
 func (workers *Workers) Workers() *api.AzureWorkers {
 	result := api.AzureWorkers{}
-
 	for _, agentPool := range workers.Cluster.Properties.AgentPoolProfiles {
 		result[*agentPool.Name] = Worker(agentPool)
 	}
@@ -23,33 +22,15 @@ func (workers *Workers) Workers() *api.AzureWorkers {
 	return &result
 }
 
-// TaintEffect maps taint effects from Azure (camelCase, i.e. NoSchedule)
-// to form used in CAPI (kebab-case, i.e. no-schedule).
-func TaintEffect(azureTaintEffect string) api.TaintEffect {
-	switch azureTaintEffect {
-	case "NoSchedule":
-		return api.TaintEffectNoSchedule
-	case "NoExecute":
-		return api.TaintEffectNoExecute
-	case "PreferNoSchedule":
-		return api.TaintEffectPreferNoSchedule
-	default:
-		return ""
-	}
-}
-
-// Taints returns Azure worker taints mapped from key=value:NoSchedule
-// form to taint objects used in CAPI.
-func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.Taints {
-	taints := api.Taints{}
-
+func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) []api.AzureTaint {
+	taints := []api.AzureTaint{}
 	for _, taint := range agentPool.NodeTaints {
 		effectSplit := strings.Split(*taint, ":")
 		if len(effectSplit) >= 2 {
 			keyValueSplit := strings.Split(effectSplit[0], "=")
 			if len(keyValueSplit) >= 2 {
-				taints = append(taints, api.Taint{
-					Effect: TaintEffect(effectSplit[1]),
+				taints = append(taints, api.AzureTaint{
+					Effect: effectSplit[1],
 					Key:    keyValueSplit[0],
 					Value:  keyValueSplit[1],
 				})
@@ -58,6 +39,18 @@ func Taints(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.T
 	}
 
 	return taints
+}
+
+func NodeLabels(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) map[string]*string {
+	labels := make(map[string]*string)
+	for key, value := range agentPool.NodeLabels {
+		// Node pool label key must not start with kubernetes.azure.com.
+		if !strings.HasPrefix(key, "kubernetes.azure.com") {
+			labels[key] = value
+		}
+	}
+
+	return labels
 }
 
 func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
@@ -70,7 +63,7 @@ func Worker(agentPool *armcontainerservice.ManagedClusterAgentPoolProfile) api.A
 			SKU:                  *agentPool.VMSize,
 			OSDiskSizeGB:         agentPool.OSDiskSizeGB,
 			AvailabilityZones:    agentPool.AvailabilityZones,
-			NodeLabels:           agentPool.NodeLabels,
+			NodeLabels:           NodeLabels(agentPool),
 			Taints:               Taints(agentPool),
 			MaxPods:              agentPool.MaxPods,
 			OsDiskType:           (*string)(agentPool.OSDiskType),

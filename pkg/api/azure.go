@@ -8,11 +8,11 @@ import (
 
 type AzureCloudSpec struct {
 	// Name of AzureClusterIdentity to be used when reconciling this cluster.
-	ClusterIdentityName string `json:"clusterIdentityName,omitempty"`
+	ClusterIdentityName string `json:"clusterIdentityName"`
 
 	// Type of Azure Identity used.
 	// One of: ServicePrincipal, ServicePrincipalCertificate, UserAssignedMSI or ManualServicePrincipal.
-	ClusterIdentityType IdentityType `json:"clusterIdentityType,omitempty"`
+	ClusterIdentityType IdentityType `json:"clusterIdentityType"`
 
 	// AllowedNamespaces is used to identify the namespaces the clusters are allowed to use the identity from.
 	// Namespaces can be selected either using an array of namespaces or with label selector.
@@ -25,7 +25,7 @@ type AzureCloudSpec struct {
 	ClientID string `json:"clientID"`
 
 	// Service Principal password.
-	ClientSecret string `json:"clientSecret,omitempty"`
+	ClientSecret string `json:"clientSecret"`
 
 	// Name of Secret containing clientSecret.
 	ClientSecretName string `json:"clientSecretName,omitempty"`
@@ -117,13 +117,13 @@ type AzureWorker struct {
 }
 
 type AzureWorkerSpec struct {
-	AdditionalTags       map[string]*string         `json:"additionalTags,omitempty"`
+	AdditionalTags       map[string]*string         `json:"additionalTags"`
 	Mode                 string                     `json:"mode"`
 	SKU                  string                     `json:"sku"`
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
 	AvailabilityZones    []*string                  `json:"availabilityZones,omitempty"`
-	NodeLabels           map[string]*string         `json:"nodeLabels,omitempty"`
-	Taints               Taints                     `json:"taints,omitempty"`
+	NodeLabels           map[string]*string         `json:"nodeLabels"`
+	Taints               []AzureTaint               `json:"taints,omitempty"`
 	Scaling              *ManagedMachinePoolScaling `json:"scaling,omitempty"`
 	MaxPods              *int32                     `json:"maxPods,omitempty"`
 	OsDiskType           *string                    `json:"osDiskType,omitempty"`
@@ -135,9 +135,15 @@ type AzureWorkerSpec struct {
 	ScaleSetPriority     *string                    `json:"scaleSetPriority,omitempty"`
 }
 
+type AzureTaint struct {
+	Effect string `json:"effect"`
+	Key    string `json:"key"`
+	Value  string `json:"value"`
+}
+
 type AllowedNamespaces struct {
-	NamespaceList []string              `json:"list"`
-	Selector      *metav1.LabelSelector `json:"selector"`
+	NamespaceList []string              `json:"list,omitempty"`
+	Selector      *metav1.LabelSelector `json:"selector,omitempty"`
 }
 
 type ManagedControlPlaneVirtualNetwork struct {
