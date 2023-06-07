@@ -3,7 +3,7 @@ package cluster
 import (
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 

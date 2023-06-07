@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v3"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/azure/cluster"
 	"github.com/pluralsh/cluster-api-migration/pkg/azure/worker"
