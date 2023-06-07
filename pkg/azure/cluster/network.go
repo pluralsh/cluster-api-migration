@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v2"
+
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
@@ -24,7 +25,7 @@ func VirtualNetworkSubnetNames(cluster *armcontainerservice.ManagedCluster) (str
 }
 
 func (cluster *Cluster) PodCIDRBlocks() []string {
-	cidrBlocks := []string{}
+	cidrBlocks := make([]string, 0)
 	for _, cidrBlock := range cluster.Cluster.Properties.NetworkProfile.PodCidrs {
 		cidrBlocks = append(cidrBlocks, *cidrBlock)
 	}
@@ -33,7 +34,7 @@ func (cluster *Cluster) PodCIDRBlocks() []string {
 }
 
 func (cluster *Cluster) ServiceCIDRBlocks() []string {
-	cidrBlocks := []string{}
+	cidrBlocks := make([]string, 0)
 	for _, cidrBlock := range cluster.Cluster.Properties.NetworkProfile.ServiceCidrs {
 		cidrBlocks = append(cidrBlocks, *cidrBlock)
 	}

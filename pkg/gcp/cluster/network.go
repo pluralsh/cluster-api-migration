@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
+	"google.golang.org/api/compute/v1"
 )
 
 func (this *Cluster) Network() *api.GCPNetwork {
@@ -20,21 +21,28 @@ func (this *Cluster) AutoCreateSubnetworks() bool {
 }
 
 func (this *Cluster) Subnets() api.GCPSubnets {
+	result := make([]api.GCPSubnet, 0)
+	for _, subnet := range this.subnetworks {
+		result = append(result, this.toSubnet(subnet))
+	}
+
+	return result
+}
+
+func (this *Cluster) toSubnet(subnetwork *compute.Subnetwork) api.GCPSubnet {
 	secondaryCidrBlocks := map[string]string{}
-	for _, ipRange := range this.subnetwork.SecondaryIpRanges {
+	for _, ipRange := range subnetwork.SecondaryIpRanges {
 		secondaryCidrBlocks[ipRange.RangeName] = ipRange.IpCidrRange
 	}
 
-	return []api.GCPSubnet{
-		{
-			Name:                this.subnetwork.Name,
-			CidrBlock:           this.subnetwork.IpCidrRange,
-			Description:         this.subnetwork.Description,
-			SecondaryCidrBlocks: secondaryCidrBlocks,
-			PrivateGoogleAccess: this.subnetwork.PrivateIpGoogleAccess,
-			EnableFlowLogs:      this.subnetwork.EnableFlowLogs,
-			Purpose:             api.GCPSubnetPurpose(this.subnetwork.Purpose),
-		},
+	return api.GCPSubnet{
+		Name:                subnetwork.Name,
+		CidrBlock:           subnetwork.IpCidrRange,
+		Description:         subnetwork.Description,
+		SecondaryCidrBlocks: secondaryCidrBlocks,
+		PrivateGoogleAccess: subnetwork.PrivateIpGoogleAccess,
+		EnableFlowLogs:      subnetwork.EnableFlowLogs,
+		Purpose:             api.GCPSubnetPurpose(subnetwork.Purpose),
 	}
 }
 

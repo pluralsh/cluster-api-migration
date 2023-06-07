@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"cloud.google.com/go/container/apiv1"
 	"cloud.google.com/go/container/apiv1/containerpb"
@@ -99,23 +100,29 @@ func (this *ClusterAccessor) getNetworkOrDie(name string) *compute.Network {
 	return network
 }
 
-func (this *ClusterAccessor) getSubnetworkOrDie(name string) *compute.Subnetwork {
-	// TODO: Check if we shouldn't search for all subnets and filter by parent network name
-	req := this.computeClient.Subnetworks.Get(this.configuration.Project, this.configuration.Region, name)
-	subnetwork, err := req.Do()
+func (this *ClusterAccessor) getSubnetworksOrDie(network string) []*compute.Subnetwork {
+	result := make([]*compute.Subnetwork, 0)
+	r := this.computeClient.Subnetworks.List(this.configuration.Project, this.configuration.Region)
+	if err := r.Pages(this.ctx, func(page *compute.SubnetworkList) error {
+		for _, subnetwork := range page.Items {
+			if strings.HasSuffix(subnetwork.Network, network) {
+				result = append(result, subnetwork)
+			}
+		}
 
-	if err != nil {
+		return nil
+	}); err != nil {
 		log.Fatal(err)
 	}
 
-	return subnetwork
+	return result
 }
 
 func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	c := this.getClusterOrDie()
 	network := this.getNetworkOrDie(c.Network)
-	subnetwork := this.getSubnetworkOrDie(c.Subnetwork)
-	gcpCluster := cluster.NewGCPCluster(this.configuration.Project, c, network, subnetwork)
+	subnetworks := this.getSubnetworksOrDie(network.Name)
+	gcpCluster := cluster.NewGCPCluster(this.configuration.Project, c, network, subnetworks)
 
 	return gcpCluster.Convert(), nil
 }
