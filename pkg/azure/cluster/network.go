@@ -24,7 +24,7 @@ func VirtualNetworkSubnetNames(cluster *armcontainerservice.ManagedCluster) (str
 }
 
 func (cluster *Cluster) PodCIDRBlocks() []string {
-	cidrBlocks := []string{}
+	cidrBlocks := make([]string, 0)
 	for _, cidrBlock := range cluster.Cluster.Properties.NetworkProfile.PodCidrs {
 		cidrBlocks = append(cidrBlocks, *cidrBlock)
 	}
@@ -33,7 +33,7 @@ func (cluster *Cluster) PodCIDRBlocks() []string {
 }
 
 func (cluster *Cluster) ServiceCIDRBlocks() []string {
-	cidrBlocks := []string{}
+	cidrBlocks := make([]string, 0)
 	for _, cidrBlock := range cluster.Cluster.Properties.NetworkProfile.ServiceCidrs {
 		cidrBlocks = append(cidrBlocks, *cidrBlock)
 	}

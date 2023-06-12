@@ -11,9 +11,9 @@ import (
 type Cluster struct {
 	*containerpb.Cluster
 
-	network    *compute.Network
-	subnetwork *compute.Subnetwork
-	project    string
+	network     *compute.Network
+	subnetworks []*compute.Subnetwork
+	project     string
 }
 
 func (this *Cluster) AutopilotEnabled() bool {
@@ -69,16 +69,25 @@ func (this *Cluster) Convert() *api.Cluster {
 				ReleaseChannel:         this.ReleaseChannel(),
 				Network:                this.Network(),
 				Subnets:                this.Subnets(),
+				AdditionalLabels:       this.additionalLabels(),
 			},
 		},
 	}
 }
 
-func NewGCPCluster(project string, cluster *containerpb.Cluster, network *compute.Network, subnetwork *compute.Subnetwork) *Cluster {
+func (this *Cluster) additionalLabels() *api.Labels {
+	if this.ResourceLabels == nil {
+		return nil
+	}
+
+	return resources.Ptr(api.Labels(this.ResourceLabels))
+}
+
+func NewGCPCluster(project string, cluster *containerpb.Cluster, network *compute.Network, subnetwork []*compute.Subnetwork) *Cluster {
 	return &Cluster{
-		project:    project,
-		Cluster:    cluster,
-		network:    network,
-		subnetwork: subnetwork,
+		project:     project,
+		Cluster:     cluster,
+		network:     network,
+		subnetworks: subnetwork,
 	}
 }

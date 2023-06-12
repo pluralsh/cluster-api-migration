@@ -43,12 +43,13 @@ type GCPCloudSpec struct {
 	ReleaseChannel         *GCPReleaseChannel `json:"releaseChannel,omitempty"`
 	Network                *GCPNetwork        `json:"network"`
 	Subnets                GCPSubnets         `json:"subnets"`
+	AdditionalLabels       *Labels            `json:"additionalLabels,omitempty"`
 }
 
 type GCPWorkers map[string]GCPWorker
 
 type GCPWorker struct {
-	Replicas         int32             `json:"replicas"`
+	Replicas         *int32            `json:"replicas,omitempty"`
 	Scaling          *GCPWorkerScaling `json:"scaling,omitempty"`
 	KubernetesLabels *Labels           `json:"kubernetesLabels,omitempty"`
 	AdditionalLabels *Labels           `json:"additionalLabels,omitempty"`
