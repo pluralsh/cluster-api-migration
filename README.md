@@ -33,7 +33,7 @@ Install new recipe:
 
 ```sh
 plural bundle install bootstrap azure-cluster-api
-plural build --cluster-api
+plural build --cluster-api --force
 plural link helm bootstrap --name bootstrap-operator --path $WORKSPACE/plural-artifacts/bootstrap/helm/bootstrap-operator/
 plural link helm bootstrap --name cluster-api-cluster --path $WORKSPACE/plural-artifacts/bootstrap/helm/cluster-api-cluster/
 ```
@@ -45,8 +45,7 @@ cd $WORKSPACE/aaa
 plural build --cluster-api --force
 cd $WORKSPACE/aaa/bootstrap
 plural workspace crds bootstrap
-sleep 30
 plural workspace helm bootstrap --skip cluster-api-cluster
-sleep 60
+sleep 120
 plural workspace helm bootstrap
 ```
