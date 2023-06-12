@@ -31,7 +31,6 @@ func Defaults() *api.AzureWorker {
 			OSType:               resources.Ptr(api.LinuxOS),
 			EnableNodePublicIP:   resources.Ptr(false),
 			NodePublicIPPrefixID: resources.Ptr(""),
-			ScaleSetPriority:     resources.Ptr("Regular"),
 		},
 	}
 }
