@@ -24,12 +24,10 @@ func (accessor *ClusterAccessor) init() (api.ClusterAccessor, error) {
 		return nil, err
 	}
 
-	clientFactory, err := armcontainerservice.NewClientFactory(accessor.configuration.SubscriptionID, cred, nil)
+	accessor.managedClustersClient, err = armcontainerservice.NewManagedClustersClient(accessor.configuration.SubscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	accessor.managedClustersClient = clientFactory.NewManagedClustersClient()
 
 	accessor.virtualNetworksClient, err = armnetwork.NewVirtualNetworksClient(accessor.configuration.SubscriptionID, cred, nil)
 	if err != nil {
