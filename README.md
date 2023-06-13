@@ -29,7 +29,7 @@ Set following tags on AKS:
 - `sigs.k8s.io_cluster-api-provider-azure_cluster_aaa` : `owned`
 - `sigs.k8s.io_cluster-api-provider-azure_role` : `common`
 
-Disable `azure-identity` by setting `azure-identity.enabled` to `false` in `aaa/bootstrap/default-values.yaml` (`aaa` is the name of installation repo).
+Disable `azure-identity` by setting `azure-identity.enabled` to `false` in `aaa/bootstrap/helm/bootstrap/default-values.yaml` (`aaa` is the name of installation repo).
 
 Install new recipe:
 
