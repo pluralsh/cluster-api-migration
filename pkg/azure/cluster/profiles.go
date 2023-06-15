@@ -3,14 +3,14 @@ package cluster
 import "github.com/pluralsh/cluster-api-migration/pkg/api"
 
 func (cluster *Cluster) AutoscalerProfile() *api.AutoScalerProfile {
-	ap := cluster.Cluster.Properties.AutoScalerProfile
+	ap := cluster.Cluster.AutoScalerProfile
 	if ap == nil {
 		return nil
 	}
 
 	return &api.AutoScalerProfile{
 		BalanceSimilarNodeGroups:      ap.BalanceSimilarNodeGroups,
-		Expander:                      (*string)(ap.Expander),
+		Expander:                      (*string)(&ap.Expander),
 		MaxEmptyBulkDelete:            ap.MaxEmptyBulkDelete,
 		MaxGracefulTerminationSec:     ap.MaxGracefulTerminationSec,
 		MaxNodeProvisionTime:          ap.MaxNodeProvisionTime,
@@ -30,7 +30,7 @@ func (cluster *Cluster) AutoscalerProfile() *api.AutoScalerProfile {
 }
 
 func (cluster *Cluster) APIServerAccessProfile() *api.APIServerAccessProfile {
-	asap := cluster.Cluster.Properties.APIServerAccessProfile
+	asap := cluster.Cluster.APIServerAccessProfile
 	if asap == nil {
 		return nil
 	}
@@ -44,7 +44,7 @@ func (cluster *Cluster) APIServerAccessProfile() *api.APIServerAccessProfile {
 }
 
 func (cluster *Cluster) AddonProfiles() []api.AddonProfile {
-	ap := cluster.Cluster.Properties.AddonProfiles
+	ap := cluster.Cluster.AddonProfiles
 	if len(ap) < 1 {
 		return nil
 	}
@@ -62,13 +62,13 @@ func (cluster *Cluster) AddonProfiles() []api.AddonProfile {
 }
 
 func (cluster *Cluster) LoadBalancerProfileOutboundIPPrefixes() []string {
-	lbp := cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile
+	lbp := cluster.Cluster.NetworkProfile.LoadBalancerProfile
 	if lbp == nil || lbp.OutboundIPPrefixes == nil {
 		return nil
 	}
 
 	prefixes := []string{}
-	for _, prefix := range lbp.OutboundIPPrefixes.PublicIPPrefixes {
+	for _, prefix := range *lbp.OutboundIPPrefixes.PublicIPPrefixes {
 		prefixes = append(prefixes, *prefix.ID)
 	}
 
@@ -76,13 +76,13 @@ func (cluster *Cluster) LoadBalancerProfileOutboundIPPrefixes() []string {
 }
 
 func (cluster *Cluster) LoadBalancerProfileOutboundIPs() []string {
-	lbp := cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile
+	lbp := cluster.Cluster.NetworkProfile.LoadBalancerProfile
 	if lbp == nil || lbp.OutboundIPs == nil {
 		return nil
 	}
 
 	ips := []string{}
-	for _, ip := range lbp.OutboundIPs.PublicIPs {
+	for _, ip := range *lbp.OutboundIPs.PublicIPs {
 		ips = append(ips, *ip.ID)
 	}
 
@@ -90,7 +90,7 @@ func (cluster *Cluster) LoadBalancerProfileOutboundIPs() []string {
 }
 
 func (cluster *Cluster) LoadBalancerProfile() *api.LoadBalancerProfile {
-	lbp := cluster.Cluster.Properties.NetworkProfile.LoadBalancerProfile
+	lbp := cluster.Cluster.NetworkProfile.LoadBalancerProfile
 	if lbp == nil {
 		return nil
 	}

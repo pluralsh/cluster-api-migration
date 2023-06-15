@@ -1,18 +1,18 @@
 package cluster
 
 import (
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
 // VirtualNetworkSubnetNames reads virtual network and subnet names from agent pool profiles in form:
 // /subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/...
 // TODO: Find a better way to do this.
-func VirtualNetworkSubnetNames(cluster *armcontainerservice.ManagedCluster) (string, string) {
-	if cluster.Properties.AgentPoolProfiles != nil {
-		for _, app := range cluster.Properties.AgentPoolProfiles {
+func VirtualNetworkSubnetNames(cluster *containerservice.ManagedCluster) (string, string) {
+	if cluster.AgentPoolProfiles != nil {
+		for _, app := range *cluster.AgentPoolProfiles {
 			split := strings.Split(*app.VnetSubnetID, "/")
 			if len(split) >= 10 {
 				return split[8], split[10]
@@ -25,8 +25,10 @@ func VirtualNetworkSubnetNames(cluster *armcontainerservice.ManagedCluster) (str
 
 func (cluster *Cluster) PodCIDRBlocks() []string {
 	cidrBlocks := make([]string, 0)
-	for _, cidrBlock := range cluster.Cluster.Properties.NetworkProfile.PodCidrs {
-		cidrBlocks = append(cidrBlocks, *cidrBlock)
+	if cluster.Cluster.NetworkProfile.PodCidrs != nil {
+		for _, cidrBlock := range *cluster.Cluster.NetworkProfile.PodCidrs {
+			cidrBlocks = append(cidrBlocks, cidrBlock)
+		}
 	}
 
 	return cidrBlocks
@@ -34,8 +36,8 @@ func (cluster *Cluster) PodCIDRBlocks() []string {
 
 func (cluster *Cluster) ServiceCIDRBlocks() []string {
 	cidrBlocks := make([]string, 0)
-	for _, cidrBlock := range cluster.Cluster.Properties.NetworkProfile.ServiceCidrs {
-		cidrBlocks = append(cidrBlocks, *cidrBlock)
+	for _, cidrBlock := range *cluster.Cluster.NetworkProfile.ServiceCidrs {
+		cidrBlocks = append(cidrBlocks, cidrBlock)
 	}
 
 	return cidrBlocks

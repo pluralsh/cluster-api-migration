@@ -121,7 +121,7 @@ type AzureWorkerSpec struct {
 	Mode                 string                     `json:"mode"`
 	SKU                  string                     `json:"sku"`
 	OSDiskSizeGB         *int32                     `json:"osDiskSizeGB,omitempty"`
-	AvailabilityZones    []*string                  `json:"availabilityZones,omitempty"`
+	AvailabilityZones    []string                   `json:"availabilityZones,omitempty"`
 	NodeLabels           map[string]*string         `json:"nodeLabels"`
 	Taints               []AzureTaint               `json:"taints,omitempty"`
 	Scaling              *ManagedMachinePoolScaling `json:"scaling,omitempty"`
@@ -230,7 +230,7 @@ type LoadBalancerProfile struct {
 }
 
 type APIServerAccessProfile struct {
-	AuthorizedIPRanges             []*string `json:"authorizedIPRanges,omitempty"`
+	AuthorizedIPRanges             *[]string `json:"authorizedIPRanges,omitempty"`
 	EnablePrivateCluster           *bool     `json:"enablePrivateCluster,omitempty"`
 	PrivateDNSZone                 *string   `json:"privateDNSZone,omitempty"`
 	EnablePrivateClusterPublicFQDN *bool     `json:"enablePrivateClusterPublicFQDN,omitempty"`
@@ -253,11 +253,6 @@ type KubeletConfig struct {
 }
 
 type CPUManagerPolicy string
-
-const (
-	CPUManagerPolicyNone   CPUManagerPolicy = "none"
-	CPUManagerPolicyStatic CPUManagerPolicy = "static"
-)
 
 type TopologyManagerPolicy string
 
@@ -300,11 +295,3 @@ type SysctlConfig struct {
 }
 
 type TransparentHugePageOption string
-
-const (
-	TransparentHugePageOptionAlways       TransparentHugePageOption = "always"
-	TransparentHugePageOptionMadvise      TransparentHugePageOption = "madvise"
-	TransparentHugePageOptionNever        TransparentHugePageOption = "never"
-	TransparentHugePageOptionDefer        TransparentHugePageOption = "defer"
-	TransparentHugePageOptionDeferMadvise TransparentHugePageOption = "defer+madvise"
-)
