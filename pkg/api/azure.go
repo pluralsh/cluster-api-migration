@@ -110,10 +110,11 @@ type AzureCloudSpec struct {
 type AzureWorkers map[string]AzureWorker
 
 type AzureWorker struct {
-	Replicas    int               `json:"replicas"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Spec        AzureWorkerSpec   `json:"spec"`
+	Replicas          int               `json:"replicas"`
+	KubernetesVersion *string           `json:"kubernetesVersion,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	Spec              AzureWorkerSpec   `json:"spec"`
 }
 
 type AzureWorkerSpec struct {

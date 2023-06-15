@@ -46,10 +46,7 @@ func Taints(agentPool containerservice.ManagedClusterAgentPoolProfile) []api.Azu
 func NodeLabels(agentPool containerservice.ManagedClusterAgentPoolProfile) map[string]*string {
 	labels := make(map[string]*string)
 	for key, value := range agentPool.NodeLabels {
-		// Node pool label key must not start with kubernetes.azure.com.
-		if !strings.HasPrefix(key, "kubernetes.azure.com") {
-			labels[key] = value
-		}
+		labels[key] = value
 	}
 
 	return labels
@@ -57,8 +54,9 @@ func NodeLabels(agentPool containerservice.ManagedClusterAgentPoolProfile) map[s
 
 func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
 	worker := api.AzureWorker{
-		Replicas:    int(*agentPool.Count),
-		Annotations: map[string]string{},
+		Replicas:          int(*agentPool.Count),
+		KubernetesVersion: agentPool.OrchestratorVersion,
+		Annotations:       map[string]string{},
 		Spec: api.AzureWorkerSpec{
 			AdditionalTags:       agentPool.Tags,
 			Mode:                 string(agentPool.Mode),
