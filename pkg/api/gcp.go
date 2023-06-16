@@ -8,9 +8,25 @@ const (
 	ReleaseChannelRapid   = GCPReleaseChannel("rapid")
 )
 
+// DatapathProvider is the datapath provider selects the implementation of the Kubernetes networking
+// model for service resolution and network policy enforcement.
+type DatapathProvider string
+
+const (
+	// DatapathProvider_UNSPECIFIED is the default value.
+	DatapathProvider_UNSPECIFIED DatapathProvider = DatapathProvider("UNSPECIFIED")
+	// DatapathProvider_LEGACY_DATAPATH uses the IPTables implementation based on kube-proxy.
+	DatapathProvider_LEGACY_DATAPATH DatapathProvider = DatapathProvider("LEGACY_DATAPATH")
+	// DatapathProvider_ADVANCED_DATAPATH uses the eBPF based GKE Dataplane V2 with additional features.
+	// See the [GKE Dataplane V2 documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/dataplane-v2)
+	// for more.
+	DatapathProvider_ADVANCED_DATAPATH DatapathProvider = DatapathProvider("ADVANCED_DATAPATH")
+)
+
 type GCPNetwork struct {
-	Name                  string `json:"name"`
-	AutoCreateSubnetworks bool   `json:"autoCreateSubnetworks"`
+	Name                  string           `json:"name"`
+	AutoCreateSubnetworks bool             `json:"autoCreateSubnetworks"`
+	DatapathProvider      DatapathProvider `json:"datapathProvider,omitempty"`
 }
 
 type GCPSubnetPurpose string
@@ -35,6 +51,11 @@ type GCPSubnet struct {
 	Purpose             GCPSubnetPurpose  `json:"purpose"`
 }
 
+type AddonsConfig struct {
+	NetworkPolicyEnabled         *bool `json:"networkPolicyEnabled,omitempty"`
+	GcpFilestoreCsiDriverEnabled *bool `json:"gcpFilestoreCsiDriverEnabled,omitempty"`
+}
+
 type GCPCloudSpec struct {
 	Project                string             `json:"project"`
 	Region                 string             `json:"region"`
@@ -44,6 +65,7 @@ type GCPCloudSpec struct {
 	Network                *GCPNetwork        `json:"network"`
 	Subnets                GCPSubnets         `json:"subnets"`
 	AdditionalLabels       *Labels            `json:"additionalLabels,omitempty"`
+	AddonsConfig           *AddonsConfig      `json:"addonsConfig,omitempty"`
 }
 
 type GCPWorkers map[string]GCPWorker
@@ -55,6 +77,9 @@ type GCPWorker struct {
 	AdditionalLabels *Labels           `json:"additionalLabels,omitempty"`
 	KubernetesTaints *Taints           `json:"kubernetesTaints,omitempty"`
 	ProviderIDList   []string          `json:"providerIDList,omitempty"`
+	MachineType      string            `json:"machineType,omitempty"`
+	DiskSizeGb       int32             `json:"diskSizeGb,omitempty"`
+	DiskType         string            `json:"diskType,omitempty"`
 }
 
 type GCPWorkerScaling struct {

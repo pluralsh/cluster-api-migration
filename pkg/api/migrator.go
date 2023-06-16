@@ -39,10 +39,11 @@ func (config *AzureConfiguration) Validate() error {
 }
 
 type GCPConfiguration struct {
-	Credentials string
-	Project     string
-	Region      string
-	Name        string
+	Credentials    string
+	Project        string
+	Region         string
+	Name           string
+	KubeconfigPath string
 }
 
 type Migrator interface {

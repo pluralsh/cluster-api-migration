@@ -10,7 +10,11 @@ import (
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/version"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/gcp/cluster"
@@ -18,10 +22,11 @@ import (
 )
 
 type ClusterAccessor struct {
-	configuration *api.GCPConfiguration
-	ctx           context.Context
-	clusterClient *container.ClusterManagerClient
-	computeClient *compute.Service
+	configuration    *api.GCPConfiguration
+	ctx              context.Context
+	clusterClient    *container.ClusterManagerClient
+	computeClient    *compute.Service
+	kubernetesClient *kubernetes.Clientset
 }
 
 func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
@@ -31,6 +36,11 @@ func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	}
 
 	err = this.initComputeClient()
+	if err != nil {
+		return nil, err
+	}
+
+	err = this.initKubernetesClient()
 	return this, err
 }
 
@@ -59,6 +69,21 @@ func (this *ClusterAccessor) initComputeClient() error {
 	}
 
 	this.computeClient = client
+	return nil
+}
+
+func (this *ClusterAccessor) initKubernetesClient() error {
+	config, err := clientcmd.BuildConfigFromFlags("", this.configuration.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	this.kubernetesClient = clientset
 	return nil
 }
 
@@ -118,6 +143,15 @@ func (this *ClusterAccessor) getSubnetworksOrDie(network string) []*compute.Subn
 	return result
 }
 
+func (this *ClusterAccessor) getNodesOrDie() *corev1.NodeList {
+	nodes, err := this.kubernetesClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return nodes
+}
+
 func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	c := this.getClusterOrDie()
 	network := this.getNetworkOrDie(c.Network)
@@ -129,7 +163,8 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 
 func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	cluster := this.getClusterOrDie()
-	workers := worker.NewGCPWorkers(cluster)
+	nodes := this.getNodesOrDie()
+	workers := worker.NewGCPWorkers(cluster, nodes)
 
 	return workers.Convert(), nil
 }
