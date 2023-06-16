@@ -16,7 +16,7 @@ func Defaults() *api.AzureWorker {
 			SKU:               "Standard_D2s_v3",
 			OSDiskSizeGB:      resources.Ptr(int32(50)),
 			AdditionalTags:    map[string]*string{},
-			AvailabilityZones: []*string{resources.Ptr("1")},
+			AvailabilityZones: []string{"1"},
 			NodeLabels: map[string]*string{
 				"plural.sh/scalingGroup":    resources.Ptr("medium-sustained-on-demand"),
 				"plural.sh/capacityType":    resources.Ptr("ON_DEMAND"),
@@ -31,7 +31,6 @@ func Defaults() *api.AzureWorker {
 			OSType:               resources.Ptr(api.LinuxOS),
 			EnableNodePublicIP:   resources.Ptr(false),
 			NodePublicIPPrefixID: resources.Ptr(""),
-			ScaleSetPriority:     resources.Ptr("Regular"),
 		},
 	}
 }

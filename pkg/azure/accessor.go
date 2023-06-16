@@ -2,10 +2,10 @@ package azure
 
 import (
 	"context"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v3"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
+	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/azure/cluster"
 	"github.com/pluralsh/cluster-api-migration/pkg/azure/worker"
@@ -14,7 +14,7 @@ import (
 type ClusterAccessor struct {
 	configuration         *api.AzureConfiguration
 	ctx                   context.Context
-	managedClustersClient *armcontainerservice.ManagedClustersClient
+	managedClustersClient containerservice.ManagedClustersClient
 	virtualNetworksClient *armnetwork.VirtualNetworksClient
 }
 
@@ -24,12 +24,16 @@ func (accessor *ClusterAccessor) init() (api.ClusterAccessor, error) {
 		return nil, err
 	}
 
-	clientFactory, err := armcontainerservice.NewClientFactory(accessor.configuration.SubscriptionID, cred, nil)
+	accessor.managedClustersClient = containerservice.NewManagedClustersClient(accessor.configuration.SubscriptionID)
 	if err != nil {
 		return nil, err
 	}
 
-	accessor.managedClustersClient = clientFactory.NewManagedClustersClient()
+	// TODO: Ensure that other auth methods work.
+	accessor.managedClustersClient.Authorizer, err = auth.NewAuthorizerFromCLI()
+	if err != nil {
+		return nil, err
+	}
 
 	accessor.virtualNetworksClient, err = armnetwork.NewVirtualNetworksClient(accessor.configuration.SubscriptionID, cred, nil)
 	if err != nil {
@@ -40,12 +44,12 @@ func (accessor *ClusterAccessor) init() (api.ClusterAccessor, error) {
 }
 
 func (accessor *ClusterAccessor) GetCluster() (*api.Cluster, error) {
-	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name, nil)
+	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	vnet, _ := cluster.VirtualNetworkSubnetNames(&c.ManagedCluster)
+	vnet, _ := cluster.VirtualNetworkSubnetNames(&c)
 	v, err := accessor.virtualNetworksClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, vnet, nil)
 	if err != nil {
 		return nil, err
@@ -55,18 +59,18 @@ func (accessor *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 		accessor.configuration.SubscriptionID,
 		accessor.configuration.ResourceGroup,
 		accessor.configuration.SSHPublicKey,
-		&c.ManagedCluster,
+		&c,
 		&v.VirtualNetwork)
 	return azureCluster.Convert()
 }
 
 // TODO: Avoid connecting Azure API twice.
 func (accessor *ClusterAccessor) GetWorkers() (*api.Workers, error) {
-	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name, nil)
+	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	azureWorkers := worker.NewAzureWorkers(accessor.configuration.SubscriptionID, accessor.configuration.ResourceGroup, &c.ManagedCluster)
+	azureWorkers := worker.NewAzureWorkers(accessor.configuration.SubscriptionID, accessor.configuration.ResourceGroup, &c)
 	return azureWorkers.Convert()
 }

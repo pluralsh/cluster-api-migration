@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	provider = api.ClusterProviderGoogle
+	provider = api.ClusterProviderAzure
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {

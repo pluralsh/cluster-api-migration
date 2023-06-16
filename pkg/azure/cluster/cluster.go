@@ -1,13 +1,13 @@
 package cluster
 
 import (
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v3"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
 type Cluster struct {
-	Cluster        *armcontainerservice.ManagedCluster
+	Cluster        *containerservice.ManagedCluster
 	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
@@ -15,11 +15,11 @@ type Cluster struct {
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
-	if cluster.Cluster.SKU == nil {
+	if cluster.Cluster.Sku == nil {
 		return nil
 	}
 
-	return &api.AKSSku{Tier: (*string)(cluster.Cluster.SKU.Tier)}
+	return &api.AKSSku{Tier: (*string)(&cluster.Cluster.Sku.Tier)}
 }
 
 func (cluster *Cluster) Convert() (*api.Cluster, error) {
@@ -27,7 +27,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		Name:              *cluster.Cluster.Name,
 		PodCIDRBlocks:     cluster.PodCIDRBlocks(),
 		ServiceCIDRBlocks: cluster.ServiceCIDRBlocks(),
-		KubernetesVersion: *cluster.Cluster.Properties.KubernetesVersion,
+		KubernetesVersion: *cluster.Cluster.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
 				ClusterIdentityName:    "cluster-identity",
@@ -40,15 +40,15 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
 				ResourceGroupName:      cluster.ResourceGroup,
-				NodeResourceGroupName:  *cluster.Cluster.Properties.NodeResourceGroup,
+				NodeResourceGroupName:  *cluster.Cluster.NodeResourceGroup,
 				VirtualNetwork:         cluster.VirtualNetwork(),
-				NetworkPlugin:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPlugin),
-				NetworkPolicy:          (*string)(cluster.Cluster.Properties.NetworkProfile.NetworkPolicy),
-				OutboundType:           (*string)(cluster.Cluster.Properties.NetworkProfile.OutboundType),
-				DNSServiceIP:           cluster.Cluster.Properties.NetworkProfile.DNSServiceIP,
+				NetworkPlugin:          (*string)(&cluster.Cluster.NetworkProfile.NetworkPlugin),
+				NetworkPolicy:          (*string)(&cluster.Cluster.NetworkProfile.NetworkPolicy),
+				OutboundType:           (*string)(&cluster.Cluster.NetworkProfile.OutboundType),
+				DNSServiceIP:           cluster.Cluster.NetworkProfile.DNSServiceIP,
 				SSHPublicKey:           cluster.SSHPublicKey,
 				SKU:                    cluster.SKU(),
-				LoadBalancerSKU:        (*string)(cluster.Cluster.Properties.NetworkProfile.LoadBalancerSKU),
+				LoadBalancerSKU:        (*string)(&cluster.Cluster.NetworkProfile.LoadBalancerSku),
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
@@ -60,7 +60,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 }
 
 func NewAzureCluster(subscriptionId, resourceGroup, sshPublicKey string,
-	cluster *armcontainerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
+	cluster *containerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
 		VNet:           vnet,
