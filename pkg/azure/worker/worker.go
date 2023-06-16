@@ -46,7 +46,10 @@ func Taints(agentPool containerservice.ManagedClusterAgentPoolProfile) []api.Azu
 func NodeLabels(agentPool containerservice.ManagedClusterAgentPoolProfile) map[string]*string {
 	labels := make(map[string]*string)
 	for key, value := range agentPool.NodeLabels {
-		labels[key] = value
+		// Node pool label key must not start with kubernetes.azure.com.
+		if !strings.HasPrefix(key, "kubernetes.azure.com") {
+			labels[key] = value
+		}
 	}
 
 	return labels
