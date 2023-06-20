@@ -1,14 +1,34 @@
 package cluster
 
 import (
-	"github.com/pluralsh/cluster-api-migration/pkg/api"
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"google.golang.org/api/compute/v1"
+
+	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
+
+func (this *Cluster) DatapathProvider() api.DatapathProvider {
+	if this.NetworkConfig == nil {
+		return api.DatapathProvider_UNSPECIFIED
+	}
+
+	switch this.NetworkConfig.DatapathProvider {
+	case containerpb.DatapathProvider_DATAPATH_PROVIDER_UNSPECIFIED:
+		return api.DatapathProvider_UNSPECIFIED
+	case containerpb.DatapathProvider_LEGACY_DATAPATH:
+		return api.DatapathProvider_LEGACY_DATAPATH
+	case containerpb.DatapathProvider_ADVANCED_DATAPATH:
+		return api.DatapathProvider_ADVANCED_DATAPATH
+	}
+
+	return api.DatapathProvider_UNSPECIFIED
+}
 
 func (this *Cluster) Network() *api.GCPNetwork {
 	return &api.GCPNetwork{
 		Name:                  this.GetNetwork(),
 		AutoCreateSubnetworks: this.AutoCreateSubnetworks(),
+		DatapathProvider:      this.DatapathProvider(),
 	}
 }
 

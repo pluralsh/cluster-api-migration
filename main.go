@@ -17,14 +17,19 @@ const (
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	switch provider {
 	case api.ClusterProviderGoogle:
-		credentials, _ := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
+		kubeconfigPath := os.Getenv("KUBECONFIG")
+		credentials, err := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
+		if err != nil {
+			panic(err)
+		}
 
 		return &api.Configuration{
 			GCPConfiguration: &api.GCPConfiguration{
-				Credentials: string(credentials),
-				Project:     "pluralsh-test-384515",
-				Region:      "europe-central2",
-				Name:        "gcp-capi",
+				Credentials:    string(credentials),
+				Project:        "pluralsh-test-384515",
+				Region:         "europe-central2",
+				Name:           "gcp-capi",
+				KubeconfigPath: kubeconfigPath,
 			},
 		}
 	case api.ClusterProviderAzure:

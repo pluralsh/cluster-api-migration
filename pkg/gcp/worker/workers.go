@@ -1,7 +1,11 @@
 package worker
 
 import (
+	"strings"
+
 	"cloud.google.com/go/container/apiv1/containerpb"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
@@ -9,6 +13,8 @@ import (
 
 type Workers struct {
 	*containerpb.Cluster
+
+	Nodes *corev1.NodeList
 }
 
 func (this *Workers) toGCPWorkers() *api.GCPWorkers {
@@ -31,12 +37,28 @@ func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) api.GCPWorker {
 	}
 
 	return api.GCPWorker{
+		Replicas:         this.getReplicasForNodePool(nodePool.Name),
 		Scaling:          autoscaling,
 		KubernetesLabels: this.kubernetesLabels(nodePool),
 		AdditionalLabels: this.additionalLabels(nodePool),
 		KubernetesTaints: this.kubernetesTaints(nodePool),
-		ProviderIDList:   []string{},
+		MachineType:      nodePool.Config.MachineType,
+		DiskSizeGb:       nodePool.Config.DiskSizeGb,
+		DiskType:         nodePool.Config.DiskType,
+		// TODO: fill out
+		ProviderIDList: []string{},
 	}
+}
+
+func (this *Workers) getReplicasForNodePool(nodePoolName string) *int32 {
+	var replicas int32 = 0
+	for _, node := range this.Nodes.Items {
+		if strings.Contains(node.Name, nodePoolName) {
+			replicas++
+		}
+	}
+
+	return resources.Ptr(replicas)
 }
 
 func (this *Workers) kubernetesLabels(nodePool *containerpb.NodePool) *api.Labels {
@@ -100,8 +122,9 @@ func (this *Workers) Convert() *api.Workers {
 	}
 }
 
-func NewGCPWorkers(cluster *containerpb.Cluster) *Workers {
+func NewGCPWorkers(cluster *containerpb.Cluster, nodes *corev1.NodeList) *Workers {
 	return &Workers{
 		Cluster: cluster,
+		Nodes:   nodes,
 	}
 }

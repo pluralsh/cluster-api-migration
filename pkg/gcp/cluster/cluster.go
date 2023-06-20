@@ -70,9 +70,28 @@ func (this *Cluster) Convert() *api.Cluster {
 				Network:                this.Network(),
 				Subnets:                this.Subnets(),
 				AdditionalLabels:       this.additionalLabels(),
+				AddonsConfig:           this.addonsConfig(),
 			},
 		},
 	}
+}
+
+func (this *Cluster) addonsConfig() *api.AddonsConfig {
+	if this.AddonsConfig == nil {
+		return nil
+	}
+
+	config := new(api.AddonsConfig)
+
+	if this.AddonsConfig.NetworkPolicyConfig != nil {
+		config.NetworkPolicyEnabled = resources.Ptr(!this.AddonsConfig.NetworkPolicyConfig.Disabled)
+	}
+
+	if this.AddonsConfig.GcpFilestoreCsiDriverConfig != nil {
+		config.GcpFilestoreCsiDriverEnabled = resources.Ptr(this.AddonsConfig.GcpFilestoreCsiDriverConfig.Enabled)
+	}
+
+	return config
 }
 
 func (this *Cluster) additionalLabels() *api.Labels {

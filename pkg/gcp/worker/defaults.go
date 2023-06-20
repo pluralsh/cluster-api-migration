@@ -12,5 +12,8 @@ func (this *Workers) defaults() *api.GCPWorker {
 		AdditionalLabels: &api.Labels{},
 		KubernetesTaints: &api.Taints{},
 		ProviderIDList:   []string{},
+		MachineType:      "e2-standard-2",
+		DiskSizeGb:       50,
+		DiskType:         "pd-standard",
 	}
 }
