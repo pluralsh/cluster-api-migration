@@ -91,6 +91,14 @@ func (this *Cluster) addonsConfig() *api.AddonsConfig {
 		config.GcpFilestoreCsiDriverEnabled = resources.Ptr(this.AddonsConfig.GcpFilestoreCsiDriverConfig.Enabled)
 	}
 
+	if this.AddonsConfig.HorizontalPodAutoscaling != nil {
+		config.HorizontalPodAutoscalingEnabled = resources.Ptr(!this.AddonsConfig.HorizontalPodAutoscaling.Disabled)
+	}
+
+	if this.AddonsConfig.HttpLoadBalancing != nil {
+		config.HTTPLoadBalancingEnabled = resources.Ptr(!this.AddonsConfig.HttpLoadBalancing.Disabled)
+	}
+
 	return config
 }
 

@@ -52,8 +52,10 @@ type GCPSubnet struct {
 }
 
 type AddonsConfig struct {
-	NetworkPolicyEnabled         *bool `json:"networkPolicyEnabled,omitempty"`
-	GcpFilestoreCsiDriverEnabled *bool `json:"gcpFilestoreCsiDriverEnabled,omitempty"`
+	HTTPLoadBalancingEnabled        *bool `json:"httpLoadBalancingEnabled,omitempty"`
+	HorizontalPodAutoscalingEnabled *bool `json:"horizontalPodAutoscalingEnabled,omitempty"`
+	NetworkPolicyEnabled            *bool `json:"networkPolicyEnabled,omitempty"`
+	GcpFilestoreCsiDriverEnabled    *bool `json:"gcpFilestoreCsiDriverEnabled,omitempty"`
 }
 
 type GCPCloudSpec struct {

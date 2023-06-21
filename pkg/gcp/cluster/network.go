@@ -67,6 +67,5 @@ func (this *Cluster) toSubnet(subnetwork *compute.Subnetwork) api.GCPSubnet {
 }
 
 func (this *Cluster) CIDRBlocks() []string {
-	// TODO: Check if this should be read from node pools
 	return []string{this.ClusterIpv4Cidr}
 }

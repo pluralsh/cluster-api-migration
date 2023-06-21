@@ -45,8 +45,7 @@ func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) api.GCPWorker {
 		MachineType:      nodePool.Config.MachineType,
 		DiskSizeGb:       nodePool.Config.DiskSizeGb,
 		DiskType:         nodePool.Config.DiskType,
-		// TODO: fill out
-		ProviderIDList: []string{},
+		ProviderIDList:   this.providerIDList(nodePool),
 	}
 }
 
@@ -83,6 +82,18 @@ func (this *Workers) kubernetesTaints(nodePool *containerpb.NodePool) *api.Taint
 	}
 
 	return this.toTaints(nodePool.Config.Taints)
+}
+
+func (this *Workers) providerIDList(nodePool *containerpb.NodePool) []string {
+	result := make([]string, 0)
+
+	for _, node := range this.Nodes.Items {
+		if strings.Contains(node.Spec.ProviderID, nodePool.Name) {
+			result = append(result, node.Spec.ProviderID)
+		}
+	}
+
+	return result
 }
 
 func (this *Workers) toTaints(taints []*containerpb.NodeTaint) *api.Taints {
