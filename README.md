@@ -40,12 +40,15 @@ plural link helm bootstrap --name bootstrap-operator --path $WORKSPACE/plural-ar
 plural link helm bootstrap --name cluster-api-cluster --path $WORKSPACE/plural-artifacts/bootstrap/helm/cluster-api-cluster/
 ```
 
-Go to your installation repo (in this case `aaa`) rebuild it, deploy CRDs and Helm chart:
+Rebuild:
 
 ```sh
-cd $WORKSPACE/aaa
 plural build --cluster-api --force
-cd $WORKSPACE/aaa/bootstrap
+```
+
+Deploy CRDs and Helm chart:
+```sh
+cd bootstrap
 plural workspace crds bootstrap
 plural workspace helm bootstrap --skip cluster-api-cluster
 sleep 120
