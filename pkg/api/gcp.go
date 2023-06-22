@@ -73,18 +73,27 @@ type GCPCloudSpec struct {
 type GCPWorkers map[string]GCPWorker
 
 type GCPWorker struct {
-	Replicas         *int32            `json:"replicas,omitempty"`
-	Scaling          *GCPWorkerScaling `json:"scaling,omitempty"`
-	KubernetesLabels *Labels           `json:"kubernetesLabels,omitempty"`
-	AdditionalLabels *Labels           `json:"additionalLabels,omitempty"`
-	KubernetesTaints *Taints           `json:"kubernetesTaints,omitempty"`
-	ProviderIDList   []string          `json:"providerIDList,omitempty"`
-	MachineType      string            `json:"machineType,omitempty"`
-	DiskSizeGb       int32             `json:"diskSizeGb,omitempty"`
-	DiskType         string            `json:"diskType,omitempty"`
+	Replicas         *int32               `json:"replicas,omitempty"`
+	Scaling          *GCPWorkerScaling    `json:"scaling,omitempty"`
+	Management       *GCPWorkerManagement `json:"management,omitempty"`
+	KubernetesLabels *Labels              `json:"kubernetesLabels,omitempty"`
+	AdditionalLabels *Labels              `json:"additionalLabels,omitempty"`
+	KubernetesTaints *Taints              `json:"kubernetesTaints,omitempty"`
+	ProviderIDList   []string             `json:"providerIDList,omitempty"`
+	MachineType      string               `json:"machineType,omitempty"`
+	DiskSizeGb       int32                `json:"diskSizeGb,omitempty"`
+	DiskType         string               `json:"diskType,omitempty"`
+	ImageType        string               `json:"imageType,omitempty"`
+	Preemptible      bool                 `json:"preemptible,omitempty"`
+	Spot             bool                 `json:"spot,omitempty"`
 }
 
 type GCPWorkerScaling struct {
 	MaxCount int32 `json:"maxCount"`
 	MinCount int32 `json:"minCount"`
+}
+
+type GCPWorkerManagement struct {
+	AutoUpgrade bool `json:"autoUpgrade,omitempty"`
+	AutoRepair  bool `json:"autoRepair,omitempty"`
 }

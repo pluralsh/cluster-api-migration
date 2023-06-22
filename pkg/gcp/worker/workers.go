@@ -36,16 +36,28 @@ func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) api.GCPWorker {
 		}
 	}
 
+	var management *api.GCPWorkerManagement
+	if nodePool.GetManagement() != nil {
+		management = &api.GCPWorkerManagement{
+			AutoUpgrade: nodePool.Management.AutoUpgrade,
+			AutoRepair:  nodePool.Management.AutoRepair,
+		}
+	}
+
 	return api.GCPWorker{
 		Replicas:         this.getReplicasForNodePool(nodePool.Name),
 		Scaling:          autoscaling,
+		Management:       management,
 		KubernetesLabels: this.kubernetesLabels(nodePool),
 		AdditionalLabels: this.additionalLabels(nodePool),
 		KubernetesTaints: this.kubernetesTaints(nodePool),
+		ProviderIDList:   this.providerIDList(nodePool),
 		MachineType:      nodePool.Config.MachineType,
 		DiskSizeGb:       nodePool.Config.DiskSizeGb,
 		DiskType:         nodePool.Config.DiskType,
-		ProviderIDList:   this.providerIDList(nodePool),
+		ImageType:        nodePool.Config.ImageType,
+		Preemptible:      nodePool.Config.Preemptible,
+		Spot:             nodePool.Config.Spot,
 	}
 }
 
