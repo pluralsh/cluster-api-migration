@@ -13,13 +13,13 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	tageks "github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ekssdk "github.com/aws/aws-sdk-go/service/eks"
-	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
-
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/weaveworks/eksctl/pkg/actions/addon"
 	"github.com/weaveworks/eksctl/pkg/actions/nodegroup"
+	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/eks"
 )
 
@@ -31,11 +31,58 @@ type ClusterAccessor struct {
 	AddonProvider     *addon.Manager
 }
 
+func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
+	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
+	if err != nil {
+		return err
+	}
+
+	_, err = this.ClusterProvider.AWSProvider.EKS().TagResource(this.ctx, &tageks.TagResourceInput{
+		ResourceArn: cluster.Arn,
+		Tags:        tags,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (this *ClusterAccessor) AddMachinePollsTags(tags map[string]string) error {
+	mySession := session.Must(session.NewSession())
+	eksSvc := ekssdk.New(mySession)
+	ngList, err := eksSvc.ListNodegroups(&ekssdk.ListNodegroupsInput{
+		ClusterName: &this.configuration.ClusterName,
+	})
+	if err != nil {
+		return err
+	}
+	for _, ng := range ngList.Nodegroups {
+		nodeGroup, err := eksSvc.DescribeNodegroup(&ekssdk.DescribeNodegroupInput{
+			ClusterName:   &this.configuration.ClusterName,
+			NodegroupName: ng,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = this.ClusterProvider.AWSProvider.EKS().TagResource(this.ctx, &tageks.TagResourceInput{
+			ResourceArn: nodeGroup.Nodegroup.NodegroupArn,
+			Tags:        tags,
+		})
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
 func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
 	if err != nil {
 		return nil, err
 	}
+
 	addons, err := this.AddonProvider.GetAll(this.ctx)
 	if err != nil {
 		return nil, err

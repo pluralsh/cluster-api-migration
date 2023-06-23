@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
@@ -16,6 +17,14 @@ type ClusterAccessor struct {
 	ctx                   context.Context
 	managedClustersClient containerservice.ManagedClustersClient
 	virtualNetworksClient *armnetwork.VirtualNetworksClient
+}
+
+func (accessor *ClusterAccessor) AddClusterTags(Tags map[string]string) error {
+	return nil
+}
+
+func (accessor *ClusterAccessor) AddMachinePollsTags(Tags map[string]string) error {
+	return nil
 }
 
 func (accessor *ClusterAccessor) init() (api.ClusterAccessor, error) {

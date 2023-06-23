@@ -48,9 +48,12 @@ type GCPConfiguration struct {
 
 type Migrator interface {
 	Convert() (*Values, error)
+	AddTags(tags map[string]string) error
 }
 
 type ClusterAccessor interface {
 	GetCluster() (*Cluster, error)
 	GetWorkers() (*Workers, error)
+	AddClusterTags(Tags map[string]string) error
+	AddMachinePollsTags(Tags map[string]string) error
 }

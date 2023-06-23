@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"cloud.google.com/go/container/apiv1"
+	container "cloud.google.com/go/container/apiv1"
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
@@ -27,6 +27,14 @@ type ClusterAccessor struct {
 	clusterClient    *container.ClusterManagerClient
 	computeClient    *compute.Service
 	kubernetesClient *kubernetes.Clientset
+}
+
+func (this *ClusterAccessor) AddClusterTags(Tags map[string]string) error {
+	return nil
+}
+
+func (this *ClusterAccessor) AddMachinePollsTags(Tags map[string]string) error {
+	return nil
 }
 
 func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {

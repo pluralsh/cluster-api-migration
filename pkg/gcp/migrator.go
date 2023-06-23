@@ -10,6 +10,16 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
+func (this *Migrator) AddTags(tags map[string]string) error {
+	if err := this.accessor.AddClusterTags(tags); err != nil {
+		return err
+	}
+	if err := this.accessor.AddMachinePollsTags(tags); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (this *Migrator) Convert() (*api.Values, error) {
 	c, err := this.accessor.GetCluster()
 	if err != nil {
