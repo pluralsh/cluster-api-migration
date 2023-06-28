@@ -30,12 +30,11 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		KubernetesVersion: *cluster.Cluster.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
+				// Omitted client ID and secret as it will be filled by values.yaml.tpl.
 				ClusterIdentityName:    "cluster-identity",
 				ClusterIdentityType:    "ServicePrincipal",
 				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientID:               "", // Using empty string as it will be filled by values.yaml.tpl.
-				ClientSecret:           "", // Using empty string as it will be filled by values.yaml.tpl.
 				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,

@@ -22,10 +22,10 @@ type AzureCloudSpec struct {
 	AllowedNamespaces *AllowedNamespaces `json:"allowedNamespaces"`
 
 	// Service Principal client ID. Both Service Principal and User Assigned MSI can use this field.
-	ClientID string `json:"clientID"`
+	ClientID string `json:"clientID,omitempty"`
 
 	// Service Principal password.
-	ClientSecret string `json:"clientSecret"`
+	ClientSecret string `json:"clientSecret,omitempty"`
 
 	// Name of Secret containing clientSecret.
 	ClientSecretName string `json:"clientSecretName,omitempty"`
