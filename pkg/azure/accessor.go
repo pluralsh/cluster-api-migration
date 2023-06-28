@@ -10,6 +10,7 @@ import (
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 	"github.com/pluralsh/cluster-api-migration/pkg/azure/cluster"
 	"github.com/pluralsh/cluster-api-migration/pkg/azure/worker"
+	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 type ClusterAccessor struct {
@@ -19,8 +20,15 @@ type ClusterAccessor struct {
 	virtualNetworksClient *armnetwork.VirtualNetworksClient
 }
 
-func (accessor *ClusterAccessor) AddClusterTags(Tags map[string]string) error {
-	return nil
+func (accessor *ClusterAccessor) AddClusterTags(tags map[string]string) error {
+	params := containerservice.TagsObject{Tags: map[string]*string{}}
+
+	for key, value := range tags {
+		params.Tags[key] = resources.Ptr(value)
+	}
+
+	_, err := accessor.managedClustersClient.UpdateTags(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name, params)
+	return err
 }
 
 func (accessor *ClusterAccessor) AddMachinePollsTags(Tags map[string]string) error {
