@@ -66,10 +66,8 @@ func (cluster *Cluster) VirtualNetwork() api.ManagedControlPlaneVirtualNetwork {
 		Name:      *cluster.VNet.Name,
 		CIDRBlock: cluster.VirtualNetworkCIDRBlock(),
 		Subnet: api.ManagedControlPlaneSubnet{
-			Name:             subnet,
-			CIDRBlock:        cluster.SubnetCIDRBlock(),
-			ServiceEndpoints: nil, // TODO: Do we need to fill it?
-			PrivateEndpoints: nil, // TODO: Do we need to fill it?
+			Name:      subnet,
+			CIDRBlock: cluster.SubnetCIDRBlock(),
 		},
 		ResourceGroup: cluster.ResourceGroup,
 	}

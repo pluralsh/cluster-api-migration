@@ -30,12 +30,11 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 		KubernetesVersion: *cluster.Cluster.KubernetesVersion,
 		CloudSpec: api.CloudSpec{
 			AzureCloudSpec: &api.AzureCloudSpec{
-				// Omitted client ID and secret as it will be filled by values.yaml.tpl.
+				// Omitted credentials that will be filled by values.yaml.tpl.
 				ClusterIdentityName:    "cluster-identity",
-				ClusterIdentityType:    "ServicePrincipal",
+				ClusterIdentityType:    "UserAssignedMSI",
 				AllowedNamespaces:      &api.AllowedNamespaces{},
 				TenantID:               *cluster.Cluster.Identity.TenantID,
-				ClientSecretName:       "cluster-identity-secret",
 				SubscriptionID:         cluster.SubscriptionID,
 				Location:               *cluster.Cluster.Location,
 				ResourceGroupName:      cluster.ResourceGroup,
@@ -51,7 +50,6 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
-				AADProfile:             nil, // TODO: Do we need to fill it?
 				AddonProfiles:          cluster.AddonProfiles(),
 			},
 		},
