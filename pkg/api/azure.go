@@ -84,7 +84,7 @@ type AzureCloudSpec struct {
 	LoadBalancerSKU *string `json:"loadBalancerSKU,omitempty"`
 
 	// String literal containing an SSH public key base64 encoded.
-	SSHPublicKey string `json:"sshPublicKey"`
+	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 
 	// LoadBalancerProfile is the profile of the cluster load balancer.
 	// +optional
