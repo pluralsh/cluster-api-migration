@@ -46,7 +46,6 @@ func (accessor *ClusterAccessor) init() (api.ClusterAccessor, error) {
 		return nil, err
 	}
 
-	// TODO: Ensure that other auth methods work.
 	accessor.managedClustersClient.Authorizer, err = auth.NewAuthorizerFromCLI()
 	if err != nil {
 		return nil, err

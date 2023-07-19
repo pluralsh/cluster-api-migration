@@ -51,7 +51,6 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
 				APIServerAccessProfile: cluster.APIServerAccessProfile(),
 				AutoScalerProfile:      cluster.AutoscalerProfile(),
-				AADProfile:             nil, // TODO: Do we need to fill it?
 				AddonProfiles:          cluster.AddonProfiles(),
 			},
 		},

@@ -9,7 +9,6 @@ import (
 
 // VirtualNetworkSubnetNames reads virtual network and subnet names from agent pool profiles in form:
 // /subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/...
-// TODO: Find a better way to do this.
 func VirtualNetworkSubnetNames(cluster *containerservice.ManagedCluster) (string, string) {
 	if cluster.AgentPoolProfiles != nil {
 		for _, app := range *cluster.AgentPoolProfiles {
@@ -66,10 +65,8 @@ func (cluster *Cluster) VirtualNetwork() api.ManagedControlPlaneVirtualNetwork {
 		Name:      *cluster.VNet.Name,
 		CIDRBlock: cluster.VirtualNetworkCIDRBlock(),
 		Subnet: api.ManagedControlPlaneSubnet{
-			Name:             subnet,
-			CIDRBlock:        cluster.SubnetCIDRBlock(),
-			ServiceEndpoints: nil, // TODO: Do we need to fill it?
-			PrivateEndpoints: nil, // TODO: Do we need to fill it?
+			Name:      subnet,
+			CIDRBlock: cluster.SubnetCIDRBlock(),
 		},
 		ResourceGroup: cluster.ResourceGroup,
 	}
