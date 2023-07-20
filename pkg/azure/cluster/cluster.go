@@ -4,6 +4,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
+	"github.com/pluralsh/cluster-api-migration/pkg/resources"
 )
 
 type Cluster struct {
@@ -27,7 +28,7 @@ func (cluster *Cluster) SSHPublicKey() *string {
 		return (*lp.SSH.PublicKeys)[0].KeyData
 	}
 
-	return nil
+	return resources.Ptr("skip")
 }
 
 func (cluster *Cluster) Convert() (*api.Cluster, error) {
