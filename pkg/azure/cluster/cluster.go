@@ -11,7 +11,6 @@ type Cluster struct {
 	VNet           *armnetwork.VirtualNetwork
 	ResourceGroup  string
 	SubscriptionID string
-	SSHPublicKey   string
 }
 
 func (cluster *Cluster) SKU() *api.AKSSku {
@@ -20,6 +19,15 @@ func (cluster *Cluster) SKU() *api.AKSSku {
 	}
 
 	return &api.AKSSku{Tier: (*string)(&cluster.Cluster.Sku.Tier)}
+}
+
+func (cluster *Cluster) SSHPublicKey() *string {
+	lp := cluster.Cluster.LinuxProfile
+	if lp != nil && lp.SSH != nil && lp.SSH.PublicKeys != nil && len(*lp.SSH.PublicKeys) > 0 {
+		return (*lp.SSH.PublicKeys)[0].KeyData
+	}
+
+	return nil
 }
 
 func (cluster *Cluster) Convert() (*api.Cluster, error) {
@@ -45,7 +53,7 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 				NetworkPolicy:          (*string)(&cluster.Cluster.NetworkProfile.NetworkPolicy),
 				OutboundType:           (*string)(&cluster.Cluster.NetworkProfile.OutboundType),
 				DNSServiceIP:           cluster.Cluster.NetworkProfile.DNSServiceIP,
-				SSHPublicKey:           cluster.SSHPublicKey,
+				SSHPublicKey:           cluster.SSHPublicKey(),
 				SKU:                    cluster.SKU(),
 				LoadBalancerSKU:        (*string)(&cluster.Cluster.NetworkProfile.LoadBalancerSku),
 				LoadBalancerProfile:    cluster.LoadBalancerProfile(),
@@ -57,13 +65,12 @@ func (cluster *Cluster) Convert() (*api.Cluster, error) {
 	}, nil
 }
 
-func NewAzureCluster(subscriptionId, resourceGroup, sshPublicKey string,
+func NewAzureCluster(subscriptionId, resourceGroup string,
 	cluster *containerservice.ManagedCluster, vnet *armnetwork.VirtualNetwork) *Cluster {
 	return &Cluster{
 		Cluster:        cluster,
 		VNet:           vnet,
 		ResourceGroup:  resourceGroup,
 		SubscriptionID: subscriptionId,
-		SSHPublicKey:   sshPublicKey,
 	}
 }

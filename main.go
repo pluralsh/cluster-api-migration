@@ -36,9 +36,8 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 		config := api.Configuration{
 			AzureConfiguration: &api.AzureConfiguration{
 				SubscriptionID: os.Getenv("AZURE_SUBSCRIPTION_ID"),
-				ResourceGroup:  "rgmarcin",
-				Name:           "azuremarcin",
-				SSHPublicKey:   os.Getenv("AZURE_B64ENCODED_SSH_PUBLIC_KEY"),
+				ResourceGroup:  "marcin-aks",
+				Name:           "amrc",
 			},
 		}
 
