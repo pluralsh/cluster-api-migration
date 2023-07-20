@@ -134,6 +134,8 @@ type AzureWorkerSpec struct {
 	KubeletConfig        *KubeletConfig             `json:"kubeletConfig,omitempty"`
 	LinuxOSConfig        *LinuxOSConfig             `json:"linuxOSConfig,omitempty"`
 	ScaleSetPriority     *string                    `json:"scaleSetPriority,omitempty"`
+	ScaleDownMode        *string                    `json:"scaleDownMode,omitempty"`
+	SpotMaxPrice         *float64                   `json:"spotMaxPrice,omitempty"`
 }
 
 type AzureTaint struct {

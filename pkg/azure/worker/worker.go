@@ -74,6 +74,8 @@ func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) api.Azure
 			EnableNodePublicIP:   agentPool.EnableNodePublicIP,
 			NodePublicIPPrefixID: agentPool.NodePublicIPPrefixID,
 			ScaleSetPriority:     (*string)(&agentPool.ScaleSetPriority),
+			ScaleDownMode:        (*string)(&agentPool.ScaleDownMode),
+			SpotMaxPrice:         agentPool.SpotMaxPrice,
 			Scaling: &api.ManagedMachinePoolScaling{
 				MinSize: *agentPool.MinCount,
 				MaxSize: *agentPool.MaxCount,
