@@ -22,7 +22,6 @@ type ClusterAccessor struct {
 
 func (accessor *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	params := containerservice.TagsObject{Tags: map[string]*string{}}
-
 	for key, value := range tags {
 		params.Tags[key] = resources.Ptr(value)
 	}
@@ -33,6 +32,23 @@ func (accessor *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 
 func (accessor *ClusterAccessor) AddMachinePollsTags(Tags map[string]string) error {
 	return nil
+}
+
+func (accessor *ClusterAccessor) AddVirtualNetworkTags(tags map[string]string) error {
+	c, err := accessor.managedClustersClient.Get(accessor.ctx, accessor.configuration.ResourceGroup, accessor.configuration.Name)
+	if err != nil {
+		return err
+	}
+
+	vnet, _ := cluster.VirtualNetworkSubnetNames(&c)
+
+	params := armnetwork.TagsObject{Tags: map[string]*string{}}
+	for key, value := range tags {
+		params.Tags[key] = resources.Ptr(value)
+	}
+
+	_, err = accessor.virtualNetworksClient.UpdateTags(accessor.ctx, accessor.configuration.ResourceGroup, vnet, params, nil)
+	return err
 }
 
 func (accessor *ClusterAccessor) init() (api.ClusterAccessor, error) {

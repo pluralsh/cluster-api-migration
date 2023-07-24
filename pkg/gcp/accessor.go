@@ -37,6 +37,10 @@ func (this *ClusterAccessor) AddMachinePollsTags(Tags map[string]string) error {
 	return nil
 }
 
+func (this *ClusterAccessor) AddVirtualNetworkTags(tags map[string]string) error {
+	return nil
+}
+
 func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	err := this.initContainerClient()
 	if err != nil {

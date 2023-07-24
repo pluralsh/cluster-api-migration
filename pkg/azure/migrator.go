@@ -17,6 +17,9 @@ func (migrator *Migrator) AddTags(tags map[string]string) error {
 	if err := migrator.accessor.AddMachinePollsTags(tags); err != nil {
 		return err
 	}
+	if err := migrator.accessor.AddVirtualNetworkTags(tags); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -55,4 +55,5 @@ type ClusterAccessor interface {
 	GetWorkers() (*Workers, error)
 	AddClusterTags(Tags map[string]string) error
 	AddMachinePollsTags(Tags map[string]string) error
+	AddVirtualNetworkTags(tags map[string]string) error
 }

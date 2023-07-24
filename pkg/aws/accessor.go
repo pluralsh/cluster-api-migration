@@ -77,6 +77,10 @@ func (this *ClusterAccessor) AddMachinePollsTags(tags map[string]string) error {
 	return nil
 }
 
+func (this *ClusterAccessor) AddVirtualNetworkTags(tags map[string]string) error {
+	return nil
+}
+
 func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
 	if err != nil {
