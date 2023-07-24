@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-
 	"github.com/aws/amazon-ec2-instance-selector/v2/pkg/selector"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	tageks "github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,6 +19,8 @@ import (
 	"github.com/weaveworks/eksctl/pkg/actions/nodegroup"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/eks"
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 type ClusterAccessor struct {
@@ -44,6 +44,77 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	if err != nil {
 		return err
 	}
+	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	cfg.Region = this.configuration.Region
+	svc := ec2.NewFromConfig(cfg)
+	name := "vpc-id"
+	vpcs, err := svc.DescribeVpcs(this.ctx, &ec2.DescribeVpcsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if len(vpcs.Vpcs) != 1 {
+		return fmt.Errorf("couldn't find the VPC %s", *cluster.ResourcesVpcConfig.VpcId)
+	}
+	vpc := vpcs.Vpcs[0]
+	dryFalse := false
+
+	_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+		Resources: []string{*vpc.VpcId},
+		Tags:      convertTags(tags),
+		DryRun:    &dryFalse,
+	})
+	if err != nil {
+		return err
+	}
+
+	subnets, err := svc.DescribeSubnets(this.ctx, &ec2.DescribeSubnetsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+
+	subnetTags := map[string]string{"kubernetes.io/role/internal-elb": "1", "sigs.k8s.io/cluster-api-provider-aws/role": "common"}
+	for k, v := range tags {
+		subnetTags[k] = v
+	}
+	for _, subnet := range subnets.Subnets {
+		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+			Resources: []string{*subnet.SubnetId},
+			Tags:      convertTags(subnetTags),
+			DryRun:    &dryFalse,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	sgroups, err := svc.DescribeSecurityGroups(this.ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	sgTags := map[string]string{"sigs.k8s.io/cluster-api-provider-aws/role": "private"}
+	for k, v := range tags {
+		sgTags[k] = v
+	}
+	for _, sg := range sgroups.SecurityGroups {
+		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+			Resources: []string{*sg.GroupId},
+			Tags:      convertTags(sgTags),
+			DryRun:    &dryFalse,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -187,7 +258,10 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 		},
 	}
 	if len(vpc.Ipv6CidrBlockAssociationSet) > 0 {
-		newCluster.AWSCloudSpec.NetworkSpec.VPC.IPv6 = &infrav1.IPv6{}
+		newCluster.AWSCloudSpec.NetworkSpec.VPC.IPv6 = &infrav1.IPv6{
+			CidrBlock: *vpc.Ipv6CidrBlockAssociationSet[0].Ipv6CidrBlock,
+			PoolID:    *vpc.Ipv6CidrBlockAssociationSet[0].Ipv6Pool,
+		}
 	}
 
 	for _, vpcTag := range vpc.Tags {
@@ -386,4 +460,17 @@ func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	}
 	this.ClusterProvider = clusterProvider
 	return this, nil
+}
+
+func convertTags(tags map[string]string) []types.Tag {
+	ec2Tags := []types.Tag{}
+	for k, v := range tags {
+		key := strings.Clone(k)
+		value := strings.Clone(v)
+		ec2Tags = append(ec2Tags, types.Tag{
+			Key:   &key,
+			Value: &value,
+		})
+	}
+	return ec2Tags
 }
