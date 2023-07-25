@@ -113,6 +113,26 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 				return err
 			}
 		}
+		subnetID = "subnet-id"
+		gtw, err := svc.DescribeNatGateways(this.ctx, &ec2.DescribeNatGatewaysInput{
+			Filter: []ec2Types.Filter{
+				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		if len(gtw.NatGateways) > 0 {
+			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+				Resources: []string{*gtw.NatGateways[0].NatGatewayId},
+				Tags:      convertTags(clusterTags),
+				DryRun:    &dryFalse,
+			})
+			if err != nil {
+				return err
+			}
+		}
 
 	}
 	sgroups, err := svc.DescribeSecurityGroups(this.ctx, &ec2.DescribeSecurityGroupsInput{
