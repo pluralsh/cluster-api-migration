@@ -36,10 +36,13 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	if err != nil {
 		return err
 	}
-
+	clusterTags := map[string]string{"sigs.k8s.io/cluster-api-provider-aws/role": "common"}
+	for k, v := range tags {
+		clusterTags[k] = v
+	}
 	_, err = this.ClusterProvider.AWSProvider.EKS().TagResource(this.ctx, &tageks.TagResourceInput{
 		ResourceArn: cluster.Arn,
-		Tags:        tags,
+		Tags:        clusterTags,
 	})
 	if err != nil {
 		return err
@@ -64,7 +67,7 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 
 	_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 		Resources: []string{*vpc.VpcId},
-		Tags:      convertTags(tags),
+		Tags:      convertTags(clusterTags),
 		DryRun:    &dryFalse,
 	})
 	if err != nil {
@@ -77,7 +80,7 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		},
 	})
 
-	subnetTags := map[string]string{"kubernetes.io/role/internal-elb": "1", "sigs.k8s.io/cluster-api-provider-aws/role": "common"}
+	subnetTags := map[string]string{"kubernetes.io/role/internal-elb": "1"}
 	for k, v := range tags {
 		subnetTags[k] = v
 	}
@@ -90,6 +93,27 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		if err != nil {
 			return err
 		}
+
+		subnetID := "association.subnet-id"
+		rt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
+			Filters: []ec2Types.Filter{
+				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+			},
+		})
+		if err != nil {
+			return err
+		}
+		if len(rt.RouteTables) > 0 {
+			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+				Resources: []string{*rt.RouteTables[0].RouteTableId},
+				Tags:      convertTags(clusterTags),
+				DryRun:    &dryFalse,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
 	}
 	sgroups, err := svc.DescribeSecurityGroups(this.ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []ec2Types.Filter{
@@ -105,13 +129,15 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		sgTags[k] = v
 	}
 	for _, sg := range sgroups.SecurityGroups {
-		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
-			Resources: []string{*sg.GroupId},
-			Tags:      convertTags(sgTags),
-			DryRun:    &dryFalse,
-		})
-		if err != nil {
-			return err
+		if *sg.GroupName != "default" {
+			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+				Resources: []string{*sg.GroupId},
+				Tags:      convertTags(sgTags),
+				DryRun:    &dryFalse,
+			})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
