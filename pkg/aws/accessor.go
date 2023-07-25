@@ -73,6 +73,24 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	if err != nil {
 		return err
 	}
+	vpce, err := svc.DescribeVpcEndpoints(this.ctx, &ec2.DescribeVpcEndpointsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	for _, endpoint := range vpce.VpcEndpoints {
+		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+			Resources: []string{*endpoint.VpcEndpointId},
+			Tags:      convertTags(clusterTags),
+			DryRun:    &dryFalse,
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	subnets, err := svc.DescribeSubnets(this.ctx, &ec2.DescribeSubnetsInput{
 		Filters: []ec2Types.Filter{
