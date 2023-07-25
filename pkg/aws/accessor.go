@@ -73,6 +73,26 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	if err != nil {
 		return err
 	}
+
+	vpcRt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	for _, rt := range vpcRt.RouteTables {
+		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+			Resources: []string{*rt.RouteTableId},
+			Tags:      convertTags(clusterTags),
+			DryRun:    &dryFalse,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	vpce, err := svc.DescribeVpcEndpoints(this.ctx, &ec2.DescribeVpcEndpointsInput{
 		Filters: []ec2Types.Filter{
 			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
@@ -112,27 +132,8 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 			return err
 		}
 
-		subnetID := "association.subnet-id"
-		rt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
-			Filters: []ec2Types.Filter{
-				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
-			},
-		})
-		if err != nil {
-			return err
-		}
-		if len(rt.RouteTables) > 0 {
-			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
-				Resources: []string{*rt.RouteTables[0].RouteTableId},
-				Tags:      convertTags(clusterTags),
-				DryRun:    &dryFalse,
-			})
-			if err != nil {
-				return err
-			}
-		}
-		subnetID = "subnet-id"
-		gtw, err := svc.DescribeNatGateways(this.ctx, &ec2.DescribeNatGatewaysInput{
+		subnetID := "subnet-id"
+		gtws, err := svc.DescribeNatGateways(this.ctx, &ec2.DescribeNatGatewaysInput{
 			Filter: []ec2Types.Filter{
 				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
 			},
@@ -141,9 +142,9 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 			return err
 		}
 
-		if len(gtw.NatGateways) > 0 {
+		for _, gtw := range gtws.NatGateways {
 			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
-				Resources: []string{*gtw.NatGateways[0].NatGatewayId},
+				Resources: []string{*gtw.NatGatewayId},
 				Tags:      convertTags(clusterTags),
 				DryRun:    &dryFalse,
 			})
