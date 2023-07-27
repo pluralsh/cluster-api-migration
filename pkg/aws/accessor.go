@@ -74,25 +74,6 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		return err
 	}
 
-	vpcRt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
-		Filters: []ec2Types.Filter{
-			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
-		},
-	})
-	if err != nil {
-		return err
-	}
-	for _, rt := range vpcRt.RouteTables {
-		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
-			Resources: []string{*rt.RouteTableId},
-			Tags:      convertTags(clusterTags),
-			DryRun:    &dryFalse,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
 	vpce, err := svc.DescribeVpcEndpoints(this.ctx, &ec2.DescribeVpcEndpointsInput{
 		Filters: []ec2Types.Filter{
 			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
@@ -123,6 +104,26 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		subnetTags[k] = v
 	}
 	for _, subnet := range subnets.Subnets {
+		subnetID := "association.subnet-id"
+		rt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
+			Filters: []ec2Types.Filter{
+				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+			},
+		})
+		if err != nil {
+			return err
+		}
+		if len(rt.RouteTables) > 0 {
+			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+				Resources: []string{*rt.RouteTables[0].RouteTableId},
+				Tags:      convertTags(tags),
+				DryRun:    &dryFalse,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
 		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 			Resources: []string{*subnet.SubnetId},
 			Tags:      convertTags(subnetTags),
@@ -132,7 +133,7 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 			return err
 		}
 
-		subnetID := "subnet-id"
+		subnetID = "subnet-id"
 		gtws, err := svc.DescribeNatGateways(this.ctx, &ec2.DescribeNatGatewaysInput{
 			Filter: []ec2Types.Filter{
 				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
@@ -145,7 +146,7 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		for _, gtw := range gtws.NatGateways {
 			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 				Resources: []string{*gtw.NatGatewayId},
-				Tags:      convertTags(clusterTags),
+				Tags:      convertTags(tags),
 				DryRun:    &dryFalse,
 			})
 			if err != nil {
@@ -163,15 +164,11 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		return err
 	}
 
-	sgTags := map[string]string{"sigs.k8s.io/cluster-api-provider-aws/role": "private"}
-	for k, v := range tags {
-		sgTags[k] = v
-	}
 	for _, sg := range sgroups.SecurityGroups {
 		if *sg.GroupName != "default" {
 			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 				Resources: []string{*sg.GroupId},
-				Tags:      convertTags(sgTags),
+				Tags:      convertTags(tags),
 				DryRun:    &dryFalse,
 			})
 			if err != nil {
@@ -379,7 +376,7 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 			AvailabilityZone: *subnet.AvailabilityZone,
 			RouteTableID:     rtID,
 			NatGatewayID:     gtID,
-			Tags:             map[string]string{fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned"},
+			Tags:             map[string]string{},
 		}
 		for _, tag := range subnet.Tags {
 			sub.Tags[*tag.Key] = *tag.Value
@@ -387,6 +384,19 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 
 		newCluster.AWSCloudSpec.NetworkSpec.Subnets = append(newCluster.AWSCloudSpec.NetworkSpec.Subnets, sub)
 	}
+
+	sgroups, err := svc.DescribeSecurityGroups(this.ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(sgroups.SecurityGroups) > 0 {
+		newCluster.AWSCloudSpec.NetworkSpec.SecurityGroupOverrides = map[infrav1.SecurityGroupRole]string{}
+	}
+
 	return newCluster, nil
 }
 
