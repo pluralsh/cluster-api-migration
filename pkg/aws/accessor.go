@@ -31,6 +31,42 @@ type ClusterAccessor struct {
 	AddonProvider     *addon.Manager
 }
 
+func (this *ClusterAccessor) Destroy() error {
+	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	cfg.Region = this.configuration.Region
+	svc := ec2.NewFromConfig(cfg)
+	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
+	if err != nil {
+		return err
+	}
+	name := "vpc-id"
+	vpce, err := svc.DescribeVpcEndpoints(this.ctx, &ec2.DescribeVpcEndpointsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	ids := []string{}
+	for _, endpoint := range vpce.VpcEndpoints {
+		ids = append(ids, *endpoint.VpcEndpointId)
+	}
+
+	dryRunFalse := false
+	if len(ids) > 0 {
+		_, err := svc.DeleteVpcEndpoints(this.ctx, &ec2.DeleteVpcEndpointsInput{
+			VpcEndpointIds: ids,
+			DryRun:         &dryRunFalse,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
 	if err != nil {

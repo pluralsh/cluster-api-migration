@@ -29,6 +29,10 @@ type ClusterAccessor struct {
 	kubernetesClient *kubernetes.Clientset
 }
 
+func (this *ClusterAccessor) Destroy() error {
+	return nil
+}
+
 func (this *ClusterAccessor) AddClusterTags(Tags map[string]string) error {
 	return nil
 }

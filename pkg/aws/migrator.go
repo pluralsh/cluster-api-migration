@@ -10,6 +10,10 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
+func (m Migrator) Destroy() error {
+	return m.accessor.Destroy()
+}
+
 func (m Migrator) AddTags(tags map[string]string) error {
 	if err := m.accessor.AddClusterTags(tags); err != nil {
 		return err
