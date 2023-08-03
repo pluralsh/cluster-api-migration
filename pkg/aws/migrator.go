@@ -10,6 +10,10 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
+func (m Migrator) PostInstall() error {
+	return m.accessor.PostInstall()
+}
+
 func (m Migrator) Destroy() error {
 	return m.accessor.Destroy()
 }

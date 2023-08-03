@@ -20,6 +20,10 @@ type ClusterAccessor struct {
 	virtualNetworksClient *armnetwork.VirtualNetworksClient
 }
 
+func (accessor *ClusterAccessor) PostInstall() error {
+	return nil
+}
+
 func (accessor *ClusterAccessor) Destroy() error {
 	return nil
 }

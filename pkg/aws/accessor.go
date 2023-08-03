@@ -31,6 +31,70 @@ type ClusterAccessor struct {
 	AddonProvider     *addon.Manager
 }
 
+func (this *ClusterAccessor) PostInstall() error {
+	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	if err != nil {
+		return err
+	}
+	cfg.Region = this.configuration.Region
+	svc := ec2.NewFromConfig(cfg)
+
+	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
+	if err != nil {
+		return err
+	}
+	name := "vpc-id"
+	subnets, err := svc.DescribeSubnets(this.ctx, &ec2.DescribeSubnetsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+
+	privateRT := []string{}
+	for _, subnet := range subnets.Subnets {
+		for _, tag := range subnet.Tags {
+			if *tag.Key == "sigs.k8s.io/cluster-api-provider-aws/role" && *tag.Value == "private" {
+				subnetID := "association.subnet-id"
+				rt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
+					Filters: []ec2Types.Filter{
+						{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+					},
+				})
+				if err != nil {
+					return err
+				}
+				if len(rt.RouteTables) > 0 {
+					privateRT = append(privateRT, *rt.RouteTables[0].RouteTableId)
+				}
+			}
+		}
+	}
+
+	dryRunFalse := false
+	clusterTags := map[string]string{"sigs.k8s.io/cluster-api-provider-aws/role": "common", fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned", fmt.Sprintf("sigs.k8s.io/cluster-api-provider-aws/cluster/%s", this.configuration.ClusterName): "owned"}
+	servicaName := fmt.Sprintf("com.amazonaws.%s.s3", this.configuration.Region)
+
+	_, err = svc.CreateVpcEndpoint(this.ctx, &ec2.CreateVpcEndpointInput{
+		ServiceName:       &servicaName,
+		VpcId:             cluster.ResourcesVpcConfig.VpcId,
+		DryRun:            &dryRunFalse,
+		RouteTableIds:     privateRT,
+		PrivateDnsEnabled: &dryRunFalse,
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeVpcEndpoint,
+				Tags:         convertTags(clusterTags),
+			},
+		},
+		VpcEndpointType: types.VpcEndpointTypeGateway,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func (this *ClusterAccessor) Destroy() error {
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
 	cfg.Region = this.configuration.Region
@@ -84,6 +148,9 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		return err
 	}
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	if err != nil {
+		return err
+	}
 	cfg.Region = this.configuration.Region
 	svc := ec2.NewFromConfig(cfg)
 	name := "vpc-id"

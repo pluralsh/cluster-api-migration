@@ -29,6 +29,10 @@ type ClusterAccessor struct {
 	kubernetesClient *kubernetes.Clientset
 }
 
+func (this *ClusterAccessor) PostInstall() error {
+	return nil
+}
+
 func (this *ClusterAccessor) Destroy() error {
 	return nil
 }
