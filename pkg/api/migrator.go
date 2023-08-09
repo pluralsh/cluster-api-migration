@@ -8,11 +8,16 @@ type Configuration struct {
 	*AWSConfiguration
 	*AzureConfiguration
 	*GCPConfiguration
+	*KindConfiguration
 }
 
 type AWSConfiguration struct {
 	ClusterName string
 	Region      string
+}
+
+type KindConfiguration struct {
+	ClusterName string
 }
 
 type AzureConfiguration struct {
