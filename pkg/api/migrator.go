@@ -8,11 +8,16 @@ type Configuration struct {
 	*AWSConfiguration
 	*AzureConfiguration
 	*GCPConfiguration
+	*KindConfiguration
 }
 
 type AWSConfiguration struct {
 	ClusterName string
 	Region      string
+}
+
+type KindConfiguration struct {
+	ClusterName string
 }
 
 type AzureConfiguration struct {
@@ -47,6 +52,8 @@ type GCPConfiguration struct {
 type Migrator interface {
 	Convert() (*Values, error)
 	AddTags(tags map[string]string) error
+	Destroy() error
+	PostInstall() error
 }
 
 type ClusterAccessor interface {
@@ -55,4 +62,6 @@ type ClusterAccessor interface {
 	AddClusterTags(Tags map[string]string) error
 	AddMachinePollsTags(Tags map[string]string) error
 	AddVirtualNetworkTags(tags map[string]string) error
+	Destroy() error
+	PostInstall() error
 }

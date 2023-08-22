@@ -31,6 +31,106 @@ type ClusterAccessor struct {
 	AddonProvider     *addon.Manager
 }
 
+func (this *ClusterAccessor) PostInstall() error {
+	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	if err != nil {
+		return err
+	}
+	cfg.Region = this.configuration.Region
+	svc := ec2.NewFromConfig(cfg)
+
+	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
+	if err != nil {
+		return err
+	}
+	name := "vpc-id"
+	subnets, err := svc.DescribeSubnets(this.ctx, &ec2.DescribeSubnetsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+
+	privateRT := []string{}
+	for _, subnet := range subnets.Subnets {
+		for _, tag := range subnet.Tags {
+			if *tag.Key == "sigs.k8s.io/cluster-api-provider-aws/role" && *tag.Value == "private" {
+				subnetID := "association.subnet-id"
+				rt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
+					Filters: []ec2Types.Filter{
+						{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+					},
+				})
+				if err != nil {
+					return err
+				}
+				if len(rt.RouteTables) > 0 {
+					privateRT = append(privateRT, *rt.RouteTables[0].RouteTableId)
+				}
+			}
+		}
+	}
+
+	dryRunFalse := false
+	clusterTags := map[string]string{"sigs.k8s.io/cluster-api-provider-aws/role": "common", fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned", fmt.Sprintf("sigs.k8s.io/cluster-api-provider-aws/cluster/%s", this.configuration.ClusterName): "owned"}
+	servicaName := fmt.Sprintf("com.amazonaws.%s.s3", this.configuration.Region)
+
+	_, err = svc.CreateVpcEndpoint(this.ctx, &ec2.CreateVpcEndpointInput{
+		ServiceName:       &servicaName,
+		VpcId:             cluster.ResourcesVpcConfig.VpcId,
+		DryRun:            &dryRunFalse,
+		RouteTableIds:     privateRT,
+		PrivateDnsEnabled: &dryRunFalse,
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeVpcEndpoint,
+				Tags:         convertTags(clusterTags),
+			},
+		},
+		VpcEndpointType: types.VpcEndpointTypeGateway,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (this *ClusterAccessor) Destroy() error {
+	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	cfg.Region = this.configuration.Region
+	svc := ec2.NewFromConfig(cfg)
+	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
+	if err != nil {
+		return err
+	}
+	name := "vpc-id"
+	vpce, err := svc.DescribeVpcEndpoints(this.ctx, &ec2.DescribeVpcEndpointsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	ids := []string{}
+	for _, endpoint := range vpce.VpcEndpoints {
+		ids = append(ids, *endpoint.VpcEndpointId)
+	}
+
+	dryRunFalse := false
+	if len(ids) > 0 {
+		_, err := svc.DeleteVpcEndpoints(this.ctx, &ec2.DeleteVpcEndpointsInput{
+			VpcEndpointIds: ids,
+			DryRun:         &dryRunFalse,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	cluster, err := this.ClusterProvider.GetCluster(this.ctx, this.configuration.ClusterName)
 	if err != nil {
@@ -48,6 +148,9 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		return err
 	}
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
+	if err != nil {
+		return err
+	}
 	cfg.Region = this.configuration.Region
 	svc := ec2.NewFromConfig(cfg)
 	name := "vpc-id"
@@ -72,25 +175,6 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	})
 	if err != nil {
 		return err
-	}
-
-	vpcRt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
-		Filters: []ec2Types.Filter{
-			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
-		},
-	})
-	if err != nil {
-		return err
-	}
-	for _, rt := range vpcRt.RouteTables {
-		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
-			Resources: []string{*rt.RouteTableId},
-			Tags:      convertTags(clusterTags),
-			DryRun:    &dryFalse,
-		})
-		if err != nil {
-			return err
-		}
 	}
 
 	vpce, err := svc.DescribeVpcEndpoints(this.ctx, &ec2.DescribeVpcEndpointsInput{
@@ -123,6 +207,26 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		subnetTags[k] = v
 	}
 	for _, subnet := range subnets.Subnets {
+		subnetID := "association.subnet-id"
+		rt, err := svc.DescribeRouteTables(this.ctx, &ec2.DescribeRouteTablesInput{
+			Filters: []ec2Types.Filter{
+				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
+			},
+		})
+		if err != nil {
+			return err
+		}
+		if len(rt.RouteTables) > 0 {
+			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
+				Resources: []string{*rt.RouteTables[0].RouteTableId},
+				Tags:      convertTags(tags),
+				DryRun:    &dryFalse,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
 		_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 			Resources: []string{*subnet.SubnetId},
 			Tags:      convertTags(subnetTags),
@@ -132,7 +236,7 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 			return err
 		}
 
-		subnetID := "subnet-id"
+		subnetID = "subnet-id"
 		gtws, err := svc.DescribeNatGateways(this.ctx, &ec2.DescribeNatGatewaysInput{
 			Filter: []ec2Types.Filter{
 				{Name: &subnetID, Values: []string{*subnet.SubnetId}},
@@ -145,7 +249,7 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		for _, gtw := range gtws.NatGateways {
 			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 				Resources: []string{*gtw.NatGatewayId},
-				Tags:      convertTags(clusterTags),
+				Tags:      convertTags(tags),
 				DryRun:    &dryFalse,
 			})
 			if err != nil {
@@ -163,15 +267,11 @@ func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 		return err
 	}
 
-	sgTags := map[string]string{"sigs.k8s.io/cluster-api-provider-aws/role": "private"}
-	for k, v := range tags {
-		sgTags[k] = v
-	}
 	for _, sg := range sgroups.SecurityGroups {
 		if *sg.GroupName != "default" {
 			_, err = this.ClusterProvider.AWSProvider.EC2().CreateTags(this.ctx, &ec2.CreateTagsInput{
 				Resources: []string{*sg.GroupId},
-				Tags:      convertTags(sgTags),
+				Tags:      convertTags(tags),
 				DryRun:    &dryFalse,
 			})
 			if err != nil {
@@ -379,7 +479,7 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 			AvailabilityZone: *subnet.AvailabilityZone,
 			RouteTableID:     rtID,
 			NatGatewayID:     gtID,
-			Tags:             map[string]string{fmt.Sprintf("kubernetes.io/cluster/%s", this.configuration.ClusterName): "owned"},
+			Tags:             map[string]string{},
 		}
 		for _, tag := range subnet.Tags {
 			sub.Tags[*tag.Key] = *tag.Value
@@ -387,6 +487,19 @@ func (this *ClusterAccessor) GetCluster() (*api.Cluster, error) {
 
 		newCluster.AWSCloudSpec.NetworkSpec.Subnets = append(newCluster.AWSCloudSpec.NetworkSpec.Subnets, sub)
 	}
+
+	sgroups, err := svc.DescribeSecurityGroups(this.ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []ec2Types.Filter{
+			{Name: &name, Values: []string{*cluster.ResourcesVpcConfig.VpcId}},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(sgroups.SecurityGroups) > 0 {
+		newCluster.AWSCloudSpec.NetworkSpec.SecurityGroupOverrides = map[infrav1.SecurityGroupRole]string{}
+	}
+
 	return newCluster, nil
 }
 

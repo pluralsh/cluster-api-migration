@@ -7,6 +7,7 @@ const (
 	ClusterProviderAWS    = ClusterProvider("aws")
 	ClusterProviderAzure  = ClusterProvider("azure")
 	ClusterProviderGoogle = ClusterProvider("google")
+	ClusterProviderKind   = ClusterProvider("kind")
 
 	ClusterTypeManaged   = ClusterType("managed")
 	ClusterTypeUnmanaged = ClusterType("unmanaged")
