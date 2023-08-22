@@ -59,7 +59,7 @@ func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 func (this *ClusterAccessor) initContainerClient() error {
 	client, err := container.NewClusterManagerClient(
 		this.ctx,
-		this.defaultClientOptions(this.configuration.Credentials)...,
+		this.defaultClientOptions()...,
 	)
 
 	if err != nil {
@@ -73,7 +73,7 @@ func (this *ClusterAccessor) initContainerClient() error {
 func (this *ClusterAccessor) initComputeClient() error {
 	client, err := compute.NewService(
 		this.ctx,
-		this.defaultClientOptions(this.configuration.Credentials)...,
+		this.defaultClientOptions()...,
 	)
 
 	if err != nil {
@@ -99,10 +99,9 @@ func (this *ClusterAccessor) initKubernetesClient() error {
 	return nil
 }
 
-func (this *ClusterAccessor) defaultClientOptions(credentials string) []option.ClientOption {
+func (this *ClusterAccessor) defaultClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		option.WithUserAgent(fmt.Sprintf("gcp.cluster.x-k8s.io/%s", version.Get())),
-		option.WithCredentialsJSON([]byte(credentials)),
 	}
 }
 

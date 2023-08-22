@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"log"
 	"os"
 
@@ -11,21 +10,16 @@ import (
 )
 
 const (
-	provider = api.ClusterProviderAzure
+	provider = api.ClusterProviderGoogle
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	switch provider {
 	case api.ClusterProviderGoogle:
 		kubeconfigPath := os.Getenv("KUBECONFIG")
-		credentials, err := base64.StdEncoding.DecodeString(os.Getenv("GCP_B64ENCODED_CREDENTIALS"))
-		if err != nil {
-			panic(err)
-		}
 
 		return &api.Configuration{
 			GCPConfiguration: &api.GCPConfiguration{
-				Credentials:    string(credentials),
 				Project:        "pluralsh-test-384515",
 				Region:         "europe-central2",
 				Name:           "gcp-capi",

@@ -38,7 +38,6 @@ func (config *AzureConfiguration) Validate() error {
 }
 
 type GCPConfiguration struct {
-	Credentials    string
 	Project        string
 	Region         string
 	Name           string
