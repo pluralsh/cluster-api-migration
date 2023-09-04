@@ -45,19 +45,25 @@ func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) api.GCPWorker {
 	}
 
 	return api.GCPWorker{
-		Replicas:         this.getReplicasForNodePool(nodePool.Name),
-		Scaling:          autoscaling,
-		Management:       management,
-		KubernetesLabels: this.kubernetesLabels(nodePool),
-		AdditionalLabels: this.additionalLabels(nodePool),
-		KubernetesTaints: this.kubernetesTaints(nodePool),
-		ProviderIDList:   this.providerIDList(nodePool),
-		MachineType:      nodePool.Config.MachineType,
-		DiskSizeGb:       nodePool.Config.DiskSizeGb,
-		DiskType:         nodePool.Config.DiskType,
-		ImageType:        nodePool.Config.ImageType,
-		Preemptible:      nodePool.Config.Preemptible,
-		Spot:             nodePool.Config.Spot,
+		Replicas:          this.getReplicasForNodePool(nodePool.Name),
+		KubernetesVersion: nil,
+		Labels:            nil,
+		Annotations:       nil,
+		IsMultiAZ:         true, // default to true so that the availability zones we discovered are used
+		Spec: api.GCPWorkerSpec{
+			Scaling:          autoscaling,
+			Management:       management,
+			KubernetesLabels: this.kubernetesLabels(nodePool),
+			AdditionalLabels: this.additionalLabels(nodePool),
+			KubernetesTaints: this.kubernetesTaints(nodePool),
+			ProviderIDList:   this.providerIDList(nodePool),
+			MachineType:      nodePool.Config.MachineType,
+			DiskSizeGb:       nodePool.Config.DiskSizeGb,
+			DiskType:         nodePool.Config.DiskType,
+			ImageType:        nodePool.Config.ImageType,
+			Preemptible:      nodePool.Config.Preemptible,
+			Spot:             nodePool.Config.Spot,
+		},
 	}
 }
 

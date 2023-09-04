@@ -73,7 +73,17 @@ type GCPCloudSpec struct {
 type GCPWorkers map[string]GCPWorker
 
 type GCPWorker struct {
-	Replicas         *int32               `json:"replicas,omitempty"`
+	Replicas          *int32            `json:"replicas,omitempty"`
+	KubernetesVersion *string           `json:"kubernetesVersion,omitempty"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	// IsMultiAZ defines if a node group should be split across the availability zones. If false, will create a node group per AZ
+	// +optional
+	IsMultiAZ bool          `json:"isMultiAZ,omitempty"`
+	Spec      GCPWorkerSpec `json:"spec"`
+}
+
+type GCPWorkerSpec struct {
 	Scaling          *GCPWorkerScaling    `json:"scaling,omitempty"`
 	Management       *GCPWorkerManagement `json:"management,omitempty"`
 	KubernetesLabels *Labels              `json:"kubernetesLabels,omitempty"`

@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	provider = api.ClusterProviderGoogle
+	provider = api.ClusterProviderGCP
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 	switch provider {
-	case api.ClusterProviderGoogle:
+	case api.ClusterProviderGCP:
 		kubeconfigPath := os.Getenv("KUBECONFIG")
 
 		return &api.Configuration{

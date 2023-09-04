@@ -385,7 +385,10 @@ type AWSWorker struct {
 	// Annotations specifies labels for the Kubernetes node objects
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
-	Spec        AWSWorkerSpec     `json:"spec"`
+	// IsMultiAZ defines if a node group should be split across the availability zones. If false, will create a node group per AZ
+	// +optional
+	IsMultiAZ bool          `json:"isMultiAZ,omitempty"`
+	Spec      AWSWorkerSpec `json:"spec"`
 }
 
 type AWSWorkerSpec struct {
