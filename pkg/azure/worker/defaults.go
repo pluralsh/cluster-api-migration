@@ -11,6 +11,7 @@ func Defaults() *api.AzureWorker {
 		Annotations: map[string]string{
 			"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler",
 		},
+		IsMultiAZ: false,
 		Spec: api.AzureWorkerSpec{
 			Mode:              "User",
 			SKU:               "Standard_D2s_v3",

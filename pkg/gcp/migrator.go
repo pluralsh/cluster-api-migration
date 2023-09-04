@@ -40,7 +40,7 @@ func (this *Migrator) Convert() (*api.Values, error) {
 	}
 
 	return &api.Values{
-		Provider: api.ClusterProviderGoogle,
+		Provider: api.ClusterProviderGCP,
 		Type:     api.ClusterTypeManaged,
 		Cluster:  *c,
 		Workers:  *w,

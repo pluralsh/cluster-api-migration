@@ -533,6 +533,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 		Defaults: api.DefaultsWorker{
 			AWSDefaultWorker: &api.AWSWorker{
 				Replicas:    0,
+				IsMultiAZ:   false,
 				Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
 				Spec: api.AWSWorkerSpec{
 					Labels:         map[string]*string{},
@@ -573,6 +574,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			Replicas:    int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
 			Labels:      nil,
 			Annotations: nil,
+			IsMultiAZ:   true, // default to true so that the availability zones we discovered are used
 			Spec: api.AWSWorkerSpec{
 				Labels:       nodeGroup.Nodegroup.Labels,
 				AMIVersion:   "", //amiVersion.Version,

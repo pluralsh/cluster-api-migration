@@ -12,7 +12,7 @@ import (
 
 func NewMigrator(provider api.ClusterProvider, config *api.Configuration) (api.Migrator, error) {
 	switch provider {
-	case api.ClusterProviderGoogle:
+	case api.ClusterProviderGCP:
 		return gcp.NewGCPMigrator(config.GCPConfiguration)
 	case api.ClusterProviderAzure:
 		return azure.NewAzureMigrator(config.AzureConfiguration)

@@ -1,9 +1,10 @@
 package worker
 
 import (
+	"strings"
+
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
-	"strings"
 )
 
 type Workers struct {
@@ -60,6 +61,7 @@ func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) api.Azure
 		Replicas:          int(*agentPool.Count),
 		KubernetesVersion: agentPool.OrchestratorVersion,
 		Annotations:       map[string]string{},
+		IsMultiAZ:         true, // default to true so that the availability zones we discovered are used
 		Spec: api.AzureWorkerSpec{
 			AdditionalTags:       agentPool.Tags,
 			Mode:                 string(agentPool.Mode),

@@ -114,7 +114,10 @@ type AzureWorker struct {
 	KubernetesVersion *string           `json:"kubernetesVersion,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty"`
-	Spec              AzureWorkerSpec   `json:"spec"`
+	// IsMultiAZ defines if a node group should be split across the availability zones. If false, will create a node group per AZ
+	// +optional
+	IsMultiAZ bool            `json:"isMultiAZ,omitempty"`
+	Spec      AzureWorkerSpec `json:"spec"`
 }
 
 type AzureWorkerSpec struct {

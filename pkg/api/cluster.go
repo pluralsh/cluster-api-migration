@@ -4,10 +4,10 @@ type ClusterProvider string
 type ClusterType string
 
 const (
-	ClusterProviderAWS    = ClusterProvider("aws")
-	ClusterProviderAzure  = ClusterProvider("azure")
-	ClusterProviderGoogle = ClusterProvider("google")
-	ClusterProviderKind   = ClusterProvider("kind")
+	ClusterProviderAWS   = ClusterProvider("aws")
+	ClusterProviderAzure = ClusterProvider("azure")
+	ClusterProviderGCP   = ClusterProvider("gcp")
+	ClusterProviderKind  = ClusterProvider("kind")
 
 	ClusterTypeManaged   = ClusterType("managed")
 	ClusterTypeUnmanaged = ClusterType("unmanaged")
@@ -38,7 +38,7 @@ type Cluster struct {
 type CloudSpec struct {
 	AWSCloudSpec   *AWSCloudSpec   `json:"aws,omitempty"`
 	AzureCloudSpec *AzureCloudSpec `json:"azure,omitempty"`
-	GCPCloudSpec   *GCPCloudSpec   `json:"google,omitempty"`
+	GCPCloudSpec   *GCPCloudSpec   `json:"gcp,omitempty"`
 }
 
 type Workers struct {
@@ -49,11 +49,11 @@ type Workers struct {
 type WorkersSpec struct {
 	AWSWorkers   *AWSWorkers   `json:"aws,omitempty"`
 	AzureWorkers *AzureWorkers `json:"azure,omitempty"`
-	GCPWorkers   *GCPWorkers   `json:"google,omitempty"`
+	GCPWorkers   *GCPWorkers   `json:"gcp,omitempty"`
 }
 
 type DefaultsWorker struct {
 	AWSDefaultWorker   *AWSWorker   `json:"aws,omitempty"`
 	AzureDefaultWorker *AzureWorker `json:"azure,omitempty"`
-	GCPDefaultWorker   *GCPWorker   `json:"google,omitempty"`
+	GCPDefaultWorker   *GCPWorker   `json:"gcp,omitempty"`
 }
