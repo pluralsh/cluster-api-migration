@@ -375,7 +375,7 @@ type UpdateConfig struct {
 	MaxUnavailablePercentage *int `json:"maxUnavailablePercentage,omitempty"`
 }
 
-type AWSWorkers map[string]AWSWorker
+type AWSWorkers map[string]*AWSWorker
 
 type AWSWorker struct {
 	Replicas int `json:"replicas"`
