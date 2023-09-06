@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	provider = api.ClusterProviderGCP
+	provider = api.ClusterProviderAzure
 )
 
 func newConfiguration(provider api.ClusterProvider) *api.Configuration {
@@ -30,8 +30,8 @@ func newConfiguration(provider api.ClusterProvider) *api.Configuration {
 		config := api.Configuration{
 			AzureConfiguration: &api.AzureConfiguration{
 				SubscriptionID: os.Getenv("AZURE_SUBSCRIPTION_ID"),
-				ResourceGroup:  "marcin-aks",
-				Name:           "amrc",
+				ResourceGroup:  "plural",
+				Name:           "plrltest2",
 			},
 		}
 

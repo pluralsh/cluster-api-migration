@@ -142,9 +142,6 @@ func (this *Workers) toTaintEffect(effect containerpb.NodeTaint_Effect) api.Tain
 
 func (this *Workers) Convert() *api.Workers {
 	return &api.Workers{
-		Defaults: api.DefaultsWorker{
-			GCPDefaultWorker: this.defaults(),
-		},
 		WorkersSpec: api.WorkersSpec{
 			GCPWorkers: this.toGCPWorkers(),
 		},

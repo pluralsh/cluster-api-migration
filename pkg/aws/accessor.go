@@ -530,20 +530,6 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	}
 
 	workers := &api.Workers{
-		Defaults: api.DefaultsWorker{
-			AWSDefaultWorker: &api.AWSWorker{
-				Replicas:    0,
-				IsMultiAZ:   false,
-				Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
-				Spec: api.AWSWorkerSpec{
-					Labels:         map[string]*string{},
-					AdditionalTags: map[string]string{},
-					AMIType:        "AL2_x86_64",
-					CapacityType:   "onDemand",
-					AMIVersion:     "",
-				},
-			},
-		},
 		WorkersSpec: api.WorkersSpec{
 			AWSWorkers: &api.AWSWorkers{},
 		},
