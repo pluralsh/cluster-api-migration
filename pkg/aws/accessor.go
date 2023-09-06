@@ -556,7 +556,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			availabilityZones = append(availabilityZones, *subnets.Subnets[0].AvailabilityZone)
 		}
 		newWorkers := *workers.AWSWorkers
-		newWorkers[*ng] = api.AWSWorker{
+		newWorkers[*ng] = &api.AWSWorker{
 			Replicas:    int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
 			Labels:      nil,
 			Annotations: nil,
@@ -595,6 +595,14 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			},
 		}
 	}
+	newWorkers := *workers.AWSWorkers
+	for _, ng := range ngList.Nodegroups {
+		if strings.Contains(*ng, "on-demand") {
+			res := strings.Split(*ng, "-subnet")
+			newWorkers[res[0]] = nil
+		}
+	}
+
 	return workers, nil
 }
 
