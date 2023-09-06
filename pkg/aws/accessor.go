@@ -512,6 +512,14 @@ func taintEffect(t string) api.TaintEffect {
 	return api.TaintEffectPreferNoSchedule
 }
 
+func getDefaultAwsWorkers() *api.AWSWorkers {
+	return &api.AWSWorkers{
+		"small-burst-on-demand":  nil,
+		"medium-burst-on-demand": nil,
+		"large-burst-on-demand":  nil,
+	}
+}
+
 func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
 	if err != nil {
@@ -531,7 +539,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 
 	workers := &api.Workers{
 		WorkersSpec: api.WorkersSpec{
-			AWSWorkers: &api.AWSWorkers{},
+			AWSWorkers: getDefaultAwsWorkers(),
 		},
 	}
 	for _, ng := range ngList.Nodegroups {
@@ -593,13 +601,6 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 					return newTags
 				}(nodeGroup.Nodegroup.Tags),
 			},
-		}
-	}
-	newWorkers := *workers.AWSWorkers
-	for _, ng := range ngList.Nodegroups {
-		if strings.Contains(*ng, "on-demand") {
-			res := strings.Split(*ng, "-subnet")
-			newWorkers[res[0]] = nil
 		}
 	}
 
