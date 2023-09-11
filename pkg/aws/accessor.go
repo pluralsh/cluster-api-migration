@@ -512,6 +512,14 @@ func taintEffect(t string) api.TaintEffect {
 	return api.TaintEffectPreferNoSchedule
 }
 
+func getDefaultAwsWorkers() *api.AWSWorkers {
+	return &api.AWSWorkers{
+		"small-burst-on-demand":  nil,
+		"medium-burst-on-demand": nil,
+		"large-burst-on-demand":  nil,
+	}
+}
+
 func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(this.ctx)
 	if err != nil {
@@ -530,22 +538,8 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 	}
 
 	workers := &api.Workers{
-		Defaults: api.DefaultsWorker{
-			AWSDefaultWorker: &api.AWSWorker{
-				Replicas:    0,
-				IsMultiAZ:   false,
-				Annotations: map[string]string{"cluster.x-k8s.io/replicas-managed-by": "external-autoscaler"},
-				Spec: api.AWSWorkerSpec{
-					Labels:         map[string]*string{},
-					AdditionalTags: map[string]string{},
-					AMIType:        "AL2_x86_64",
-					CapacityType:   "onDemand",
-					AMIVersion:     "",
-				},
-			},
-		},
 		WorkersSpec: api.WorkersSpec{
-			AWSWorkers: &api.AWSWorkers{},
+			AWSWorkers: getDefaultAwsWorkers(),
 		},
 	}
 	for _, ng := range ngList.Nodegroups {
@@ -570,7 +564,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			availabilityZones = append(availabilityZones, *subnets.Subnets[0].AvailabilityZone)
 		}
 		newWorkers := *workers.AWSWorkers
-		newWorkers[*ng] = api.AWSWorker{
+		newWorkers[*ng] = &api.AWSWorker{
 			Replicas:    int(*nodeGroup.Nodegroup.ScalingConfig.DesiredSize),
 			Labels:      nil,
 			Annotations: nil,
@@ -609,6 +603,7 @@ func (this *ClusterAccessor) GetWorkers() (*api.Workers, error) {
 			},
 		}
 	}
+
 	return workers, nil
 }
 

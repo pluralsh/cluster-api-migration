@@ -107,7 +107,7 @@ type AzureCloudSpec struct {
 	AddonProfiles []AddonProfile `json:"addonProfiles,omitempty"`
 }
 
-type AzureWorkers map[string]AzureWorker
+type AzureWorkers map[string]*AzureWorker
 
 type AzureWorker struct {
 	Replicas          int               `json:"replicas"`

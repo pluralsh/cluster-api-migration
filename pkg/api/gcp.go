@@ -70,7 +70,7 @@ type GCPCloudSpec struct {
 	AddonsConfig           *AddonsConfig      `json:"addonsConfig,omitempty"`
 }
 
-type GCPWorkers map[string]GCPWorker
+type GCPWorkers map[string]*GCPWorker
 
 type GCPWorker struct {
 	Replicas          *int32            `json:"replicas,omitempty"`

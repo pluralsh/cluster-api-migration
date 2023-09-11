@@ -17,8 +17,19 @@ type Workers struct {
 	Nodes *corev1.NodeList
 }
 
+// getDefaultAzureWorkers returns nullified list of default Azure workers.
+// It is done as we don't want to create them during migration.
+// This has to be kept in sync with bootstrap/helm/cluster-api-cluster/values.yaml.
+func getDefaultGCPWorkers() api.GCPWorkers {
+	return api.GCPWorkers{
+		"small-burst-on-demand":  nil,
+		"medium-burst-on-demand": nil,
+		"large-burst-on-demand":  nil,
+	}
+}
+
 func (this *Workers) toGCPWorkers() *api.GCPWorkers {
-	workers := api.GCPWorkers{}
+	workers := getDefaultGCPWorkers()
 
 	for _, nodePool := range this.Cluster.NodePools {
 		workers[nodePool.Name] = this.toGCPWorker(nodePool)
@@ -27,7 +38,7 @@ func (this *Workers) toGCPWorkers() *api.GCPWorkers {
 	return &workers
 }
 
-func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) api.GCPWorker {
+func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) *api.GCPWorker {
 	var autoscaling *api.GCPWorkerScaling
 	if nodePool.GetAutoscaling() != nil {
 		autoscaling = &api.GCPWorkerScaling{
@@ -44,7 +55,7 @@ func (this *Workers) toGCPWorker(nodePool *containerpb.NodePool) api.GCPWorker {
 		}
 	}
 
-	return api.GCPWorker{
+	return &api.GCPWorker{
 		Replicas:          this.getReplicasForNodePool(nodePool.Name),
 		KubernetesVersion: nil,
 		Labels:            nil,
@@ -142,9 +153,6 @@ func (this *Workers) toTaintEffect(effect containerpb.NodeTaint_Effect) api.Tain
 
 func (this *Workers) Convert() *api.Workers {
 	return &api.Workers{
-		Defaults: api.DefaultsWorker{
-			GCPDefaultWorker: this.defaults(),
-		},
 		WorkersSpec: api.WorkersSpec{
 			GCPWorkers: this.toGCPWorkers(),
 		},

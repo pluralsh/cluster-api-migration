@@ -7,6 +7,20 @@ import (
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
+// getDefaultAzureWorkers returns nullified list of default Azure workers.
+// It is done as we don't want to create them during migration.
+// This has to be kept in sync with bootstrap/helm/cluster-api-cluster/values.yaml.
+func getDefaultAzureWorkers() api.AzureWorkers {
+	return api.AzureWorkers{
+		"lsod":   nil,
+		"lsspot": nil,
+		"msod":   nil,
+		"msspot": nil,
+		"ssod":   nil,
+		"ssspot": nil,
+	}
+}
+
 type Workers struct {
 	Cluster        *containerservice.ManagedCluster
 	ResourceGroup  string
@@ -14,7 +28,8 @@ type Workers struct {
 }
 
 func (workers *Workers) Workers() *api.AzureWorkers {
-	result := api.AzureWorkers{}
+	result := getDefaultAzureWorkers()
+
 	for _, agentPool := range *workers.Cluster.AgentPoolProfiles {
 		result[*agentPool.Name] = Worker(agentPool)
 	}
@@ -56,8 +71,8 @@ func NodeLabels(agentPool containerservice.ManagedClusterAgentPoolProfile) map[s
 	return labels
 }
 
-func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) api.AzureWorker {
-	worker := api.AzureWorker{
+func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) *api.AzureWorker {
+	return &api.AzureWorker{
 		Replicas:          int(*agentPool.Count),
 		KubernetesVersion: agentPool.OrchestratorVersion,
 		Annotations:       map[string]string{},
@@ -84,15 +99,10 @@ func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) api.Azure
 			},
 		},
 	}
-
-	return worker
 }
 
 func (workers *Workers) Convert() (*api.Workers, error) {
 	return &api.Workers{
-		Defaults: api.DefaultsWorker{
-			AzureDefaultWorker: Defaults(),
-		},
 		WorkersSpec: api.WorkersSpec{
 			AzureWorkers: workers.Workers(),
 		},
