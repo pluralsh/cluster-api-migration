@@ -1,21 +1,11 @@
 package aws
 
 import (
-	"context"
-
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
 )
 
 type Migrator struct {
 	accessor api.ClusterAccessor
-}
-
-func (m Migrator) PostInstall() error {
-	return m.accessor.PostInstall()
-}
-
-func (m Migrator) Destroy() error {
-	return m.accessor.Destroy()
 }
 
 func (m Migrator) AddTags(tags map[string]string) error {
@@ -51,7 +41,6 @@ func (m Migrator) Convert() (*api.Values, error) {
 func NewAWSMigrator(configuration *api.AWSConfiguration) (api.Migrator, error) {
 	a, err := (&ClusterAccessor{
 		configuration: configuration,
-		ctx:           context.Background(),
 	}).init()
 	if err != nil {
 		return nil, err

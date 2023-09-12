@@ -10,14 +10,6 @@ type Migrator struct {
 	accessor api.ClusterAccessor
 }
 
-func (migrator *Migrator) PostInstall() error {
-	return migrator.accessor.PostInstall()
-}
-
-func (migrator *Migrator) Destroy() error {
-	return nil
-}
-
 func (migrator *Migrator) AddTags(tags map[string]string) error {
 	if err := migrator.accessor.AddClusterTags(tags); err != nil {
 		return err

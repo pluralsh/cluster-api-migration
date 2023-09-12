@@ -52,8 +52,6 @@ type GCPConfiguration struct {
 type Migrator interface {
 	Convert() (*Values, error)
 	AddTags(tags map[string]string) error
-	Destroy() error
-	PostInstall() error
 }
 
 type ClusterAccessor interface {
@@ -62,6 +60,4 @@ type ClusterAccessor interface {
 	AddClusterTags(Tags map[string]string) error
 	AddMachinePollsTags(Tags map[string]string) error
 	AddVirtualNetworkTags(tags map[string]string) error
-	Destroy() error
-	PostInstall() error
 }

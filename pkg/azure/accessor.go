@@ -20,14 +20,6 @@ type ClusterAccessor struct {
 	virtualNetworksClient *armnetwork.VirtualNetworksClient
 }
 
-func (accessor *ClusterAccessor) PostInstall() error {
-	return nil
-}
-
-func (accessor *ClusterAccessor) Destroy() error {
-	return nil
-}
-
 func (accessor *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	params := containerservice.TagsObject{Tags: map[string]*string{}}
 	for key, value := range tags {

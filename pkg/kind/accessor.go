@@ -8,14 +8,6 @@ type ClusterAccessor struct {
 	configuration *api.KindConfiguration
 }
 
-func (this *ClusterAccessor) PostInstall() error {
-	return nil
-}
-
-func (this *ClusterAccessor) Destroy() error {
-	return nil
-}
-
 func (this *ClusterAccessor) AddClusterTags(tags map[string]string) error {
 	return nil
 }
