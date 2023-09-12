@@ -74,7 +74,7 @@ func NodeLabels(agentPool containerservice.ManagedClusterAgentPoolProfile) map[s
 func Worker(agentPool containerservice.ManagedClusterAgentPoolProfile) *api.AzureWorker {
 	return &api.AzureWorker{
 		Replicas:          int(*agentPool.Count),
-		KubernetesVersion: agentPool.OrchestratorVersion,
+		KubernetesVersion: nil,
 		Annotations:       map[string]string{},
 		IsMultiAZ:         true, // default to true so that the availability zones we discovered are used
 		Spec: api.AzureWorkerSpec{
