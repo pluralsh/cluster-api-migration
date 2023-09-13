@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2022-03-01/containerservice"
 	"strings"
 
 	"github.com/pluralsh/cluster-api-migration/pkg/api"
@@ -9,9 +8,9 @@ import (
 
 // VirtualNetworkSubnetNames reads virtual network and subnet names from agent pool profiles in form:
 // /subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/...
-func VirtualNetworkSubnetNames(cluster *containerservice.ManagedCluster) (string, string) {
-	if cluster.AgentPoolProfiles != nil {
-		for _, app := range *cluster.AgentPoolProfiles {
+func (cluster *Cluster) VirtualNetworkSubnetNames() (string, string) {
+	if cluster.Cluster.AgentPoolProfiles != nil {
+		for _, app := range *cluster.Cluster.AgentPoolProfiles {
 			split := strings.Split(*app.VnetSubnetID, "/")
 			if len(split) >= 10 {
 				return split[8], split[10]
@@ -59,7 +58,7 @@ func (cluster *Cluster) SubnetCIDRBlock() string {
 }
 
 func (cluster *Cluster) VirtualNetwork() api.ManagedControlPlaneVirtualNetwork {
-	_, subnet := VirtualNetworkSubnetNames(cluster.Cluster)
+	_, subnet := cluster.VirtualNetworkSubnetNames()
 
 	return api.ManagedControlPlaneVirtualNetwork{
 		Name:      *cluster.VNet.Name,
