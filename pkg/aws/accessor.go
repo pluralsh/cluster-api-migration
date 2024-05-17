@@ -59,7 +59,11 @@ func (this *ClusterAccessor) init() (api.ClusterAccessor, error) {
 	if err != nil {
 		return nil, err
 	}
-	nodeGroupProvider := nodegroup.New(cfg, clusterProvider, clientSet, selector.New(clusterProvider.AWSProvider.Session()))
+	instanceSelector, err := selector.New(ctx, clusterProvider.AWSProvider.AWSConfig())
+	if err != nil {
+		return nil, err
+	}
+	nodeGroupProvider := nodegroup.New(cfg, clusterProvider, clientSet, instanceSelector)
 	stackManager := clusterProvider.NewStackManager(cmd.ClusterConfig)
 	addonProvider, err := addon.New(cmd.ClusterConfig, clusterProvider.AWSProvider.EKS(), stackManager, *cmd.ClusterConfig.IAM.WithOIDC, nil, nil)
 	if err != nil {
